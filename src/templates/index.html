@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GW2 Crafting Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>GW2 Crafting Calculator</h1>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <form id="calculatorForm">
+                    <div class="material-inputs">
+                        <h3>Material Preise</h3>
+                        
+                        <div class="mb-3">
+                            <label>Berserker's Orichalcum Imbued Inscription</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control currency-input" name="inscription_gold" placeholder="Gold">
+                                <span class="input-group-text">G</span>
+                                <input type="number" class="form-control currency-input" name="inscription_silver" placeholder="Silber">
+                                <span class="input-group-text">S</span>
+                                <input type="number" class="form-control currency-input" name="inscription_copper" placeholder="Kupfer">
+                                <span class="input-group-text">C</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Orichalcum Ore</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control currency-input" name="ori_ore_gold" placeholder="Gold">
+                                <span class="input-group-text">G</span>
+                                <input type="number" class="form-control currency-input" name="ori_ore_silver" placeholder="Silber">
+                                <span class="input-group-text">S</span>
+                                <input type="number" class="form-control currency-input" name="ori_ore_copper" placeholder="Kupfer">
+                                <span class="input-group-text">C</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ancient Wood Log</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control currency-input" name="ancient_wood_gold" placeholder="Gold">
+                                <span class="input-group-text">G</span>
+                                <input type="number" class="form-control currency-input" name="ancient_wood_silver" placeholder="Silber">
+                                <span class="input-group-text">S</span>
+                                <input type="number" class="form-control currency-input" name="ancient_wood_copper" placeholder="Kupfer">
+                                <span class="input-group-text">C</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Hardened Leather Section</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control currency-input" name="leather_gold" placeholder="Gold">
+                                <span class="input-group-text">G</span>
+                                <input type="number" class="form-control currency-input" name="leather_silver" placeholder="Silber">
+                                <span class="input-group-text">S</span>
+                                <input type="number" class="form-control currency-input" name="leather_copper" placeholder="Kupfer">
+                                <span class="input-group-text">C</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Berechnen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section mb-4">
+            <h3>Filter</h3>
+            <div class="row">
+                <!-- Huntsman Filter -->
+                <div class="col-md-4">
+                    <div class="profession-group">
+                        <div class="form-check profession-main">
+                            <input class="form-check-input profession-filter" type="checkbox" value="Huntsman" id="huntsmanFilter" checked>
+                            <label class="form-check-label" for="huntsmanFilter">
+                                <strong>Huntsman</strong>
+                            </label>
+                        </div>
+                        <div class="weapon-subgroup ms-4">
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Longbow" id="longbowFilter" checked>
+                                <label class="form-check-label" for="longbowFilter">Longbow</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Pistol" id="pistolFilter" checked>
+                                <label class="form-check-label" for="pistolFilter">Pistol</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Rifle" id="rifleFilter" checked>
+                                <label class="form-check-label" for="rifleFilter">Rifle</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Short Bow" id="shortbowFilter" checked>
+                                <label class="form-check-label" for="shortbowFilter">Short Bow</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Torch" id="torchFilter" checked>
+                                <label class="form-check-label" for="torchFilter">Torch</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Warhorn" id="warhornFilter" checked>
+                                <label class="form-check-label" for="warhornFilter">Warhorn</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weaponsmith Filter -->
+                <div class="col-md-4">
+                    <div class="profession-group">
+                        <div class="form-check profession-main">
+                            <input class="form-check-input profession-filter" type="checkbox" value="Weaponsmith" id="weaponsmithFilter" checked>
+                            <label class="form-check-label" for="weaponsmithFilter">
+                                <strong>Weaponsmith</strong>
+                            </label>
+                        </div>
+                        <div class="weapon-subgroup ms-4">
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Axe" id="axeFilter" checked>
+                                <label class="form-check-label" for="axeFilter">Axe</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Dagger" id="daggerFilter" checked>
+                                <label class="form-check-label" for="daggerFilter">Dagger</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Greatsword" id="greatswordFilter" checked>
+                                <label class="form-check-label" for="greatswordFilter">Greatsword</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Hammer" id="hammerFilter" checked>
+                                <label class="form-check-label" for="hammerFilter">Hammer</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Mace" id="maceFilter" checked>
+                                <label class="form-check-label" for="maceFilter">Mace</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Shield" id="shieldFilter" checked>
+                                <label class="form-check-label" for="shieldFilter">Shield</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Sword" id="swordFilter" checked>
+                                <label class="form-check-label" for="swordFilter">Sword</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Artificer Filter -->
+                <div class="col-md-4">
+                    <div class="profession-group">
+                        <div class="form-check profession-main">
+                            <input class="form-check-input profession-filter" type="checkbox" value="Artificer" id="artificerFilter" checked>
+                            <label class="form-check-label" for="artificerFilter">
+                                <strong>Artificer</strong>
+                            </label>
+                        </div>
+                        <div class="weapon-subgroup ms-4">
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter artificer-weapon" type="checkbox" value="Restored Boreal Focus" id="focusFilter" checked>
+                                <label class="form-check-label" for="focusFilter">Focus</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter artificer-weapon" type="checkbox" value="Restored Boreal Scepter" id="scepterFilter" checked>
+                                <label class="form-check-label" for="scepterFilter">Scepter</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input weapon-filter artificer-weapon" type="checkbox" value="Restored Boreal Staff" id="staffFilter" checked>
+                                <label class="form-check-label" for="staffFilter">Staff</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Liste - nach den Filtern, vor den Ergebnissen -->
+        <div class="shopping-list-section mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Shopping Liste</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h5>Rohmaterialien</h5>
+                            <ul class="list-unstyled" id="rawMaterialsList">
+                                <li class="mb-2">
+                                    <strong>Orichalcum Ore:</strong> <span id="totalOrichalcum">0</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Ancient Wood:</strong> <span id="totalAncientWood">0</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Hardened Leather:</strong> <span id="totalLeather">0</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Inschriften</h5>
+                            <ul class="list-unstyled" id="inscriptionsList">
+                                <li class="mb-2">
+                                    <strong>Berserker's Orichalcum Imbued Inscription:</strong> 
+                                    <span id="totalInscriptions">0</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Zu kaufende Komponenten</h5>
+                            <ul class="list-unstyled" id="componentsList">
+                                <!-- Wird dynamisch gefüllt -->
+                            </ul>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Gesamtkosten</h5>
+                            <div id="totalCost" class="h4 text-primary">0g 0s 0c</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsList"></div>
+    </div>
+
+    <!-- Modal für Verkaufspreis -->
+    <div class="modal fade" id="sellPriceModal" tabindex="-1" aria-labelledby="sellPriceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sellPriceModalLabel">Verkaufspreis eingeben</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="currentWeaponName">
+                    <div class="input-group mb-3">
+                        <input type="number" class="form-control" id="sell_price_gold" placeholder="Gold" min="0">
+                        <span class="input-group-text">G</span>
+                        <input type="number" class="form-control" id="sell_price_silver" placeholder="Silber" min="0" max="99">
+                        <span class="input-group-text">S</span>
+                        <input type="number" class="form-control" id="sell_price_copper" placeholder="Kupfer" min="0" max="99">
+                        <span class="input-group-text">C</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="calculateProfitBtn">Berechnen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap und andere Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

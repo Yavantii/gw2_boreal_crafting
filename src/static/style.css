@@ -1,0 +1,313 @@
+.material-inputs .input-group {
+    width: 300px;
+}
+
+.material-inputs input {
+    width: 80px !important;
+}
+
+.result-item {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.material-list {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.components-list {
+    margin-top: 10px;
+    margin-left: 15px;
+}
+
+.components-list ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.components-list li {
+    margin-bottom: 8px;
+}
+
+.component-cost {
+    margin-left: 10px;
+    color: #666;
+}
+
+.component-materials {
+    font-size: 0.9em;
+    color: #888;
+    margin-left: 20px;
+}
+
+.total-cost {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.filter-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+}
+
+.filter-section h5 {
+    margin-bottom: 10px;
+}
+
+.form-check {
+    margin-bottom: 5px;
+}
+
+#weaponFilters {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Entferne Pfeile von number inputs */
+.currency-input::-webkit-outer-spin-button,
+.currency-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.currency-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Anpassung der Eingabefelder */
+.currency-input {
+    width: 80px !important;
+    text-align: right;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    color: #666;
+    font-weight: bold;
+    min-width: 30px;
+    justify-content: center;
+}
+
+.material-inputs .input-group {
+    width: 100%;
+    max-width: 400px;
+}
+
+.alert {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.alert-heading {
+    margin-bottom: 10px;
+}
+
+.profit-section {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.profit-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.profit-details p {
+    margin-bottom: 8px;
+}
+
+.profit-amount {
+    font-size: 1.1em;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+}
+
+.text-success {
+    color: #28a745;
+}
+
+.text-danger {
+    color: #dc3545;
+}
+
+/* Modal Styles */
+.modal-dialog {
+    max-width: 500px;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+.modal-body .input-group {
+    margin-top: 10px;
+}
+
+/* Profit Results Styles */
+.profit-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.profit-details p {
+    margin-bottom: 8px;
+}
+
+.profit-amount {
+    font-size: 1.1em;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+}
+
+.profession-group {
+    margin-bottom: 20px;
+}
+
+.profession-main {
+    margin-bottom: 10px;
+}
+
+.weapon-subgroup {
+    border-left: 2px solid #dee2e6;
+    padding-left: 15px;
+}
+
+.form-check {
+    margin-bottom: 5px;
+}
+
+.profession-main label {
+    font-size: 1.1em;
+}
+
+.component-item {
+    margin-bottom: 15px;
+}
+
+.component-prices {
+    margin-left: 25px;
+    margin-bottom: 5px;
+}
+
+.price-strikethrough {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.custom-price-input {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.custom-price-input .input-group {
+    max-width: 300px;
+}
+
+.custom-price-toggle {
+    margin-right: 8px;
+}
+
+.component-materials {
+    margin-left: 25px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.edit-price-btn {
+    padding: 0 5px;
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.edit-price-btn:hover {
+    color: #0d6efd;
+}
+
+.custom-price-editor {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 10px;
+    max-width: 400px;
+}
+
+.price-strikethrough {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.custom-price-active {
+    color: #fd7e14;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.confirm-price-btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.component-prices {
+    margin-left: 25px;
+    margin-bottom: 5px;
+}
+
+.reset-price-btn, .confirm-price-btn {
+    padding: 0.25rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+}
+
+.reset-price-btn {
+    margin-right: 5px;
+}
+
+.confirm-price-btn {
+    margin-left: 5px;
+}
+
+.input-group > .reset-price-btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.custom-price-editor .input-group {
+    flex-wrap: nowrap;
+}
+
+/* Neue Styles für die Shopping-Liste */
+.shopping-list-section {
+    margin-top: 2rem;
+}
+
+.shopping-list-section .card-header {
+    background-color: #f8f9fa;
+}
+
+.shopping-list-section h5 {
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+#totalCost {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+.list-unstyled li {
+    color: #495057;
+    font-size: 0.95rem;
+}
