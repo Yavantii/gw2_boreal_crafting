@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateShoppingList();
+    updateTotalProfits();
 });
 
 document.getElementById('calculatorForm').addEventListener('submit', async (e) => {
@@ -123,6 +124,7 @@ function applyFilters() {
     
     displayResults(filteredResults);
     updateShoppingList();
+    updateTotalProfits();
 }
 
 function displayNoFilterWarning() {
@@ -321,6 +323,7 @@ function handleCustomPriceConfirm(e) {
     // Aktualisiere die Gesamtkosten
     updateTotalCost(componentId);
     updateShoppingList();
+    updateTotalProfits();
 }
 
 // Neue Funktion für das Aktualisieren der Gesamtkosten
@@ -451,6 +454,7 @@ function handlePriceReset(e) {
     // Aktualisiere die Gesamtkosten
     updateTotalCost(componentId);
     updateShoppingList();
+    updateTotalProfits();
 }
 
 // Event-Listener für die Profit-Buttons
@@ -504,6 +508,8 @@ document.addEventListener('click', (e) => {
             `;
             
             sellPriceModal.hide();
+            updateShoppingList();
+            updateTotalProfits();
         };
     }
 });
@@ -629,3 +635,56 @@ function updateShoppingList() {
 document.addEventListener('DOMContentLoaded', () => {
     updateShoppingList();
 });
+
+function updateTotalProfits() {
+    let totalProfitInCopper = 0;
+    const profitsList = document.getElementById('profitsList');
+    profitsList.innerHTML = ''; // Liste leeren
+
+    // Finde alle sichtbaren Waffen mit Gewinnberechnung
+    const visibleWeapons = document.querySelectorAll('.result-item:not(.d-none)');
+    
+    visibleWeapons.forEach(weapon => {
+        const profitElement = weapon.querySelector('.profit-amount');
+        if (profitElement) {
+            const weaponName = weapon.querySelector('h4').textContent;
+            const profitText = profitElement.textContent;
+            const match = profitText.match(/(-?\d+)g\s+(-?\d+)s\s+(-?\d+)c/);
+            
+            if (match) {
+                const profitInCopper = (parseInt(match[1]) * 10000 + 
+                                      parseInt(match[2]) * 100 + 
+                                      parseInt(match[3])) * 
+                                      (profitText.includes('-') ? -1 : 1);
+                
+                totalProfitInCopper += profitInCopper;
+                
+                // Füge Eintrag zur Liste hinzu
+                const li = document.createElement('li');
+                li.className = 'mb-2';
+                li.innerHTML = `
+                    <strong>${weaponName}:</strong> 
+                    <span class="${profitInCopper >= 0 ? 'text-success' : 'text-danger'}">
+                        ${formatPrice(profitInCopper)}
+                    </span>
+                `;
+                profitsList.appendChild(li);
+            }
+        }
+    });
+    
+    // Aktualisiere Gesamtgewinn
+    const totalProfitElement = document.getElementById('totalProfit');
+    totalProfitElement.className = `h4 ${totalProfitInCopper >= 0 ? 'text-success' : 'text-danger'}`;
+    totalProfitElement.textContent = formatPrice(totalProfitInCopper);
+}
+
+// Hilfsfunktion zum Formatieren der Preise
+function formatPrice(copperValue) {
+    const negative = copperValue < 0;
+    copperValue = Math.abs(copperValue);
+    const gold = Math.floor(copperValue / 10000);
+    const silver = Math.floor((copperValue % 10000) / 100);
+    const copper = copperValue % 100;
+    return `${negative ? '-' : ''}${gold}g ${silver}s ${copper}c`;
+}
