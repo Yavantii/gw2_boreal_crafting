@@ -14,75 +14,57 @@
         
         <!-- Aktuelle Marktpreise -->
         <div class="card mt-4 mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Current Market Prices (Buy Orders)</h3>
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Current Market Prices</h3>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="price-display">
-                            <strong>Berserker's Orichalcum Imbued Inscription:</strong><br>
-                            {% if prices and prices.inscription %}
-                                <span class="price" data-item="inscription">
-                                    {{ prices.inscription.gold }}G 
-                                    {{ prices.inscription.silver }}S 
-                                    {{ prices.inscription.copper }}C
-                                </span>
-                            {% else %}
-                                <span class="text-muted">Loading...</span>
-                            {% endif %}
-                        </div>
+            <div class="card-body py-2">
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="price-item">
+                        <span class="price-label">Inscription:</span>
+                        {% if prices and prices.inscription %}
+                            <span class="price" data-item="inscription">
+                                {{ prices.inscription.gold }}G {{ prices.inscription.silver }}S {{ prices.inscription.copper }}C
+                            </span>
+                        {% else %}
+                            <span class="text-muted">Loading...</span>
+                        {% endif %}
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="price-display">
-                            <strong>Orichalcum Ore:</strong><br>
-                            {% if prices and prices.ori_ore %}
-                                <span class="price" data-item="ori_ore">
-                                    {{ prices.ori_ore.gold }}G 
-                                    {{ prices.ori_ore.silver }}S 
-                                    {{ prices.ori_ore.copper }}C
-                                </span>
-                            {% else %}
-                                <span class="text-muted">Loading...</span>
-                            {% endif %}
-                        </div>
+                    <div class="price-item">
+                        <span class="price-label">Orichalcum:</span>
+                        {% if prices and prices.ori_ore %}
+                            <span class="price" data-item="ori_ore">
+                                {{ prices.ori_ore.gold }}G {{ prices.ori_ore.silver }}S {{ prices.ori_ore.copper }}C
+                            </span>
+                        {% else %}
+                            <span class="text-muted">Loading...</span>
+                        {% endif %}
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="price-display">
-                            <strong>Ancient Wood Log:</strong><br>
-                            {% if prices and prices.ancient_wood %}
-                                <span class="price" data-item="ancient_wood">
-                                    {{ prices.ancient_wood.gold }}G 
-                                    {{ prices.ancient_wood.silver }}S 
-                                    {{ prices.ancient_wood.copper }}C
-                                </span>
-                            {% else %}
-                                <span class="text-muted">Loading...</span>
-                            {% endif %}
-                        </div>
+                    <div class="price-item">
+                        <span class="price-label">Ancient Wood:</span>
+                        {% if prices and prices.ancient_wood %}
+                            <span class="price" data-item="ancient_wood">
+                                {{ prices.ancient_wood.gold }}G {{ prices.ancient_wood.silver }}S {{ prices.ancient_wood.copper }}C
+                            </span>
+                        {% else %}
+                            <span class="text-muted">Loading...</span>
+                        {% endif %}
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="price-display">
-                            <strong>Hardened Leather Section:</strong><br>
-                            {% if prices and prices.leather %}
-                                <span class="price" data-item="leather">
-                                    {{ prices.leather.gold }}G 
-                                    {{ prices.leather.silver }}S 
-                                    {{ prices.leather.copper }}C
-                                </span>
-                            {% else %}
-                                <span class="text-muted">Loading...</span>
-                            {% endif %}
-                        </div>
+                    <div class="price-item">
+                        <span class="price-label">Leather:</span>
+                        {% if prices and prices.leather %}
+                            <span class="price" data-item="leather">
+                                {{ prices.leather.gold }}G {{ prices.leather.silver }}S {{ prices.leather.copper }}C
+                            </span>
+                        {% else %}
+                            <span class="text-muted">Loading...</span>
+                        {% endif %}
                     </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12 text-center">
-                        <button type="button" class="btn btn-primary" id="refreshPrices">
-                            Refresh Prices
+                    <div class="ms-auto">
+                        <button type="button" class="btn btn-sm btn-primary me-2" id="refreshPrices">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
-                        <button type="button" class="btn btn-success" id="calculateButton">
-                            Calculate
+                        <button type="button" class="btn btn-sm btn-success" id="calculateButton">
+                            <i class="bi bi-calculator"></i> Calculate
                         </button>
                     </div>
                 </div>
@@ -205,68 +187,43 @@
             <!-- Hauptinhalt -->
             <div class="col-md-9">
                 <!-- Shopping Liste -->
-        <div class="shopping-list-section mb-4">
+        <div class="shopping-list-section">
             <div class="card">
-                        <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Shopping Liste</h3>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
+                    <div class="row g-3">
+                        <div class="col-md-4">
                             <h5>Rohmaterialien</h5>
-                            <ul class="list-unstyled" id="rawMaterialsList">
-                                <li class="mb-2">
-                                    <strong>Orichalcum Ore:</strong> <span id="totalOrichalcum">0</span>
-                                </li>
-                                <li class="mb-2">
-                                    <strong>Ancient Wood:</strong> <span id="totalAncientWood">0</span>
-                                </li>
-                                <li class="mb-2">
-                                    <strong>Hardened Leather:</strong> <span id="totalLeather">0</span>
-                                </li>
-                            </ul>
+                            <ul class="list-unstyled" id="rawMaterialsList"></ul>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <h5>Inschriften</h5>
-                            <ul class="list-unstyled" id="inscriptionsList">
-                                <li class="mb-2">
-                                    <strong>Berserker's Orichalcum Imbued Inscription:</strong> 
-                                    <span id="totalInscriptions">0</span>
-                                </li>
-                            </ul>
+                            <ul class="list-unstyled" id="inscriptionsList"></ul>
                         </div>
-                        <div class="col-md-3">
-                            <h5>Zu kaufende Komponenten</h5>
-                            <ul class="list-unstyled" id="componentsList">
-                                <!-- Wird dynamisch gefüllt -->
-                            </ul>
+                        <div class="col-md-4">
+                            <h5>Komponenten</h5>
+                            <ul class="list-unstyled" id="componentsList"></ul>
                         </div>
-                        <div class="col-md-3">
-                            <h5>Gesamtkosten</h5>
-                            <div id="totalCost" class="h4 text-primary">0g 0s 0c</div>
-                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <h5 class="mb-0">Gesamtkosten: <span id="totalCost" class="text-primary">0g 0s 0c</span></h5>
                     </div>
                 </div>
             </div>
         </div>
 
                 <!-- Profit Übersicht -->
-        <div class="total-profits-section mb-4">
+        <div class="total-profits-section">
             <div class="card">
-                        <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Profit Übersicht</h3>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <ul class="list-unstyled" id="profitsList">
-                                <!-- Wird dynamisch gefüllt -->
-                            </ul>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Gesamtgewinn</h5>
-                            <div id="totalProfit" class="h4">0g 0s 0c</div>
-                        </div>
+                    <ul class="list-unstyled mb-3" id="profitsList"></ul>
+                    <div class="text-end">
+                        <h5 class="mb-0">Gesamtgewinn: <span id="totalProfit" class="h4">0g 0s 0c</span></h5>
                     </div>
                 </div>
             </div>
@@ -679,6 +636,11 @@
                             }
                         }
                         
+                        // Wenn es sich um eine Inscription handelt, zähle sie als benötigtes Material
+                        if (compName === 'inscription') {
+                            materials.totalInscriptions += 1;
+                        }
+
                         componentsList.appendChild(compDiv);
                     });
                     
@@ -774,6 +736,9 @@
 
             // Initial collapse
             sections.forEach(section => section.classList.add('collapsed'));
+
+            // Automatisch Ergebnisse berechnen beim Laden der Seite
+            calculateResults();
         });
     </script>
 </body>

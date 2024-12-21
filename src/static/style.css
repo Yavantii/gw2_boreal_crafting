@@ -409,7 +409,7 @@
     }
 }
 
-/* Kompakteres Layout für Shopping Liste und Profit Übersicht */
+/* Ausklappbare Panels */
 .shopping-list-section, .total-profits-section {
     position: fixed;
     bottom: 1rem;
@@ -419,16 +419,17 @@
     overflow-y: auto;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
+    border-radius: 8px;
 }
 
 .shopping-list-section {
-    left: 1rem;
-    width: 45%;
+    left: calc(25% + 1rem);
+    width: calc(37.5% - 1.5rem);
 }
 
 .total-profits-section {
     right: 1rem;
-    width: 45%;
+    width: calc(37.5% - 1.5rem);
 }
 
 .shopping-list-section.collapsed, .total-profits-section.collapsed {
@@ -438,16 +439,19 @@
 .card-header {
     cursor: pointer;
     user-select: none;
+    transition: background-color 0.2s;
 }
 
 .card-header:hover {
-    background-color: #0d6efd !important;
+    background-color: #0b5ed7 !important;
 }
 
 .card-header h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-size: 1rem;
+    margin: 0;
 }
 
 .card-header h3::after {
@@ -462,7 +466,8 @@
 
 /* Hauptinhalt nach oben verschieben */
 #resultsList {
-    margin-bottom: 35vh;
+    margin-bottom: calc(30vh + 2rem);
+    padding-bottom: 1rem;
 }
 
 /* Responsive Anpassungen */
@@ -472,9 +477,57 @@
         width: 100%;
         margin-bottom: 1rem;
         max-height: none;
+        box-shadow: none;
     }
     
     #resultsList {
         margin-bottom: 0;
     }
+}
+
+/* Kompakte Market Prices */
+.price-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.price-label {
+    font-size: 0.85em;
+    color: #495057;
+    font-weight: 500;
+}
+
+.price {
+    font-size: 0.9em;
+    color: #198754;
+    font-weight: 500;
+}
+
+/* Verbesserte Buttons */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-sm i {
+    font-size: 0.8em;
+    margin-right: 0.25rem;
+}
+
+/* Hauptinhalt-Container */
+.col-md-9 {
+    position: relative;
+}
+
+/* Sidebar */
+.filter-section {
+    position: sticky;
+    top: 1rem;
+    z-index: 1001;
+    background: white;
 }
