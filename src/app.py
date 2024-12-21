@@ -1,39 +1,64 @@
 from flask import Flask, render_template, request, jsonify
 from models.materials import GW2Price, BaseMaterials
 from calculator.crafting_calculator import CraftingCalculator
+import requests
 
 app = Flask(__name__)
 calculator = CraftingCalculator()
 
+API_KEY = "53E1B734-BE78-6D4B-BFC4-AB5A7BD0CE8E8CE228E8-69FC-4E92-9CAE-AD4C68D3AB44"
+API_URL = "https://api.guildwars2.com/v2/commerce/prices?ids={}"
+
+MATERIAL_IDS = {
+    "inscription": 19920,
+    "ori_ore": 19701, 
+    "leather": 19732,
+    "ancient_wood": 19725
+}
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    prices = fetch_prices()
+    return render_template('index.html', prices=prices)
+
+def fetch_prices():
+    item_ids = ",".join(str(id) for id in MATERIAL_IDS.values())
+    url = API_URL.format(item_ids)
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        prices = response.json()
+        return {
+            item_name: GW2Price(
+                gold=price["buys"]["unit_price"] // 10000,
+                silver=(price["buys"]["unit_price"] % 10000) // 100,
+                copper=price["buys"]["unit_price"] % 100
+            )
+            for item_name, item_id in MATERIAL_IDS.items()
+            for price in prices
+            if price["id"] == item_id
+        }
+    else:
+        app.logger.error(f"Error fetching prices from GW2 API: {response.status_code}")
+        return None
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
     try:
-        # Materialdaten aus dem Formular holen
+        # Preise über die GW2 API abrufen
+        prices = fetch_prices()
+        
+        if prices is None:
+            return jsonify({'error': "Failed to fetch prices from GW2 API"}), 500
+        
+        # Materialdaten aus den abgerufenen Preisen erstellen
         materials = BaseMaterials(
-            inscription_price=GW2Price(
-                gold=int(request.form.get('inscription_gold', 0)),
-                silver=int(request.form.get('inscription_silver', 0)),
-                copper=int(request.form.get('inscription_copper', 0))
-            ),
-            ori_ore_price=GW2Price(
-                gold=int(request.form.get('ori_ore_gold', 0)),
-                silver=int(request.form.get('ori_ore_silver', 0)),
-                copper=int(request.form.get('ori_ore_copper', 0))
-            ),
-            ancient_wood_price=GW2Price(
-                gold=int(request.form.get('ancient_wood_gold', 0)),
-                silver=int(request.form.get('ancient_wood_silver', 0)),
-                copper=int(request.form.get('ancient_wood_copper', 0))
-            ),
-            leather_price=GW2Price(
-                gold=int(request.form.get('leather_gold', 0)),
-                silver=int(request.form.get('leather_silver', 0)),
-                copper=int(request.form.get('leather_copper', 0))
-            )
+            inscription_price=prices["inscription"],
+            ori_ore_price=prices["ori_ore"],
+            ancient_wood_price=prices["ancient_wood"],
+            leather_price=prices["leather"]
         )
 
         results = {}
@@ -74,7 +99,7 @@ def calculate():
                     'copper': total_cost.copper
                 },
                 'components': components_json,
-                'profession': weapon_type.profession.value  # Stelle sicher, dass wir den String-Wert verwenden
+                'profession': weapon_type.profession.value
             }
 
         return jsonify(results)
@@ -82,6 +107,20 @@ def calculate():
     except Exception as e:
         app.logger.error(f"Error in calculate: {str(e)}")
         return jsonify({'error': str(e)}), 400
+
+@app.route('/refresh-prices', methods=['GET'])
+def refresh_prices():
+    prices = fetch_prices()
+    if prices is None:
+        return jsonify({'error': "Failed to fetch prices from GW2 API"}), 500
+    return jsonify({
+        item_name: {
+            'gold': price.gold,
+            'silver': price.silver,
+            'copper': price.copper
+        }
+        for item_name, price in prices.items()
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

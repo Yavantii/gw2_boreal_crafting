@@ -311,3 +311,26 @@
     color: #495057;
     font-size: 0.95rem;
 }
+
+.price-display {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.price-display strong {
+    color: #495057;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.price {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #198754;
+}
+
+.text-muted {
+    color: #6c757d;
+}
