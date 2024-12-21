@@ -49,10 +49,18 @@
 }
 
 .filter-section {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 5px;
+    background-color: #ffffff;
+    border-radius: 8px;
     margin-bottom: 30px;
+}
+
+.filter-section .card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-section .card-header {
+    border-radius: 8px 8px 0 0;
 }
 
 .filter-section h5 {
@@ -173,143 +181,111 @@
 }
 
 .profession-group {
-    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.profession-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 .profession-main {
     margin-bottom: 10px;
 }
 
+.profession-main .form-check-label {
+    font-size: 1.1em;
+    color: #2c3e50;
+}
+
 .weapon-subgroup {
-    border-left: 2px solid #dee2e6;
+    border-left: 3px solid #e9ecef;
     padding-left: 15px;
 }
 
 .form-check {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
-.profession-main label {
-    font-size: 1.1em;
+.form-check:last-child {
+    margin-bottom: 0;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.weapon-subgroup .form-check-label {
+    color: #495057;
+    font-size: 0.95em;
 }
 
 .component-item {
-    margin-bottom: 15px;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #eee;
 }
 
-.component-prices {
-    margin-left: 25px;
-    margin-bottom: 5px;
-}
-
-.price-strikethrough {
-    text-decoration: line-through;
-    color: #6c757d;
-}
-
-.custom-price-input {
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-.custom-price-input .input-group {
-    max-width: 300px;
-}
-
-.custom-price-toggle {
-    margin-right: 8px;
+.component-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
 }
 
 .component-materials {
-    margin-left: 25px;
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: #666;
+    margin-top: 0.25rem;
 }
 
-.edit-price-btn {
-    padding: 0 5px;
-    color: #6c757d;
-    text-decoration: none;
+.text-warning {
+    color: #fd7e14 !important;
 }
 
-.edit-price-btn:hover {
-    color: #0d6efd;
+/* Kompaktere Karten */
+.card-body {
+    padding: 1rem;
 }
 
-.custom-price-editor {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    padding: 10px;
-    max-width: 400px;
-}
-
-.price-strikethrough {
-    text-decoration: line-through;
-    color: #6c757d;
-}
-
-.custom-price-active {
-    color: #fd7e14;
-    font-weight: bold;
-    margin-left: 10px;
-}
-
-.confirm-price-btn {
-    padding: 0.25rem 0.5rem;
-}
-
-.component-prices {
-    margin-left: 25px;
-    margin-bottom: 5px;
-}
-
-.reset-price-btn, .confirm-price-btn {
-    padding: 0.25rem 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-}
-
-.reset-price-btn {
-    margin-right: 5px;
-}
-
-.confirm-price-btn {
-    margin-left: 5px;
-}
-
-.input-group > .reset-price-btn:first-child {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.custom-price-editor .input-group {
-    flex-wrap: nowrap;
-}
-
-/* Neue Styles für die Shopping-Liste */
-.shopping-list-section {
-    margin-top: 2rem;
-}
-
-.shopping-list-section .card-header {
-    background-color: #f8f9fa;
-}
-
-.shopping-list-section h5 {
-    color: #495057;
+.card {
     margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-#totalCost {
-    color: #0d6efd;
-    font-weight: bold;
+/* Ergebniskarten */
+#resultsList .card {
+    transition: all 0.2s ease-in-out;
 }
 
-.list-unstyled li {
-    color: #495057;
-    font-size: 0.95rem;
+#resultsList .card:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+#resultsList .card-body {
+    padding: 0.75rem;
+}
+
+#resultsList .components-list {
+    margin-top: 0.5rem;
+}
+
+/* Profit Übersicht */
+.profit-amount {
+    padding: 0.25rem 0;
+    margin-top: 0.5rem !important;
+}
+
+/* Shopping Liste */
+.shopping-list-section .list-unstyled li {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shopping-list-section .list-unstyled li:last-child {
+    margin-bottom: 0;
 }
 
 .price-display {
@@ -333,4 +309,172 @@
 
 .text-muted {
     color: #6c757d;
+}
+
+/* Kompakteres Layout für Current Market Prices */
+.price-display {
+    padding: 0.5rem;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    box-shadow: none;
+    border: 1px solid #e9ecef;
+}
+
+.price-display strong {
+    font-size: 0.9em;
+    margin-bottom: 2px;
+}
+
+.price {
+    font-size: 1em;
+}
+
+/* Kompaktere Shopping Liste */
+.shopping-list-section .card-body {
+    padding: 0.75rem;
+}
+
+.shopping-list-section h5 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.shopping-list-section .list-unstyled li {
+    font-size: 0.9em;
+    margin-bottom: 0.25rem;
+}
+
+/* Kompaktere Profit Übersicht */
+.total-profits-section .card-body {
+    padding: 0.75rem;
+}
+
+.total-profits-section h5 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+#profitsList li {
+    font-size: 0.9em;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+#profitsList li:last-child {
+    border-bottom: none;
+}
+
+/* Copy Button Styles */
+.copy-btn {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.8em;
+    line-height: 1;
+    border: none;
+    background: none;
+    color: #6c757d;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.copy-btn:hover {
+    opacity: 1;
+    background: none;
+    color: #0d6efd;
+}
+
+/* Ergebniskarten */
+#resultsList .card {
+    margin-bottom: 0.75rem;
+}
+
+#resultsList .card-body {
+    padding: 0.75rem;
+}
+
+#resultsList .card-title {
+    font-size: 1rem;
+}
+
+.net-profit {
+    font-size: 0.85em;
+}
+
+/* Sticky Sidebar */
+@media (min-width: 768px) {
+    .filter-section {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+}
+
+/* Kompakteres Layout für Shopping Liste und Profit Übersicht */
+.shopping-list-section, .total-profits-section {
+    position: fixed;
+    bottom: 1rem;
+    background: white;
+    z-index: 1000;
+    max-height: 30vh;
+    overflow-y: auto;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.shopping-list-section {
+    left: 1rem;
+    width: 45%;
+}
+
+.total-profits-section {
+    right: 1rem;
+    width: 45%;
+}
+
+.shopping-list-section.collapsed, .total-profits-section.collapsed {
+    transform: translateY(calc(100% - 2.5rem));
+}
+
+.card-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.card-header:hover {
+    background-color: #0d6efd !important;
+}
+
+.card-header h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3::after {
+    content: '▼';
+    font-size: 0.8em;
+    transition: transform 0.3s;
+}
+
+.collapsed .card-header h3::after {
+    transform: rotate(-90deg);
+}
+
+/* Hauptinhalt nach oben verschieben */
+#resultsList {
+    margin-bottom: 35vh;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 768px) {
+    .shopping-list-section, .total-profits-section {
+        position: static;
+        width: 100%;
+        margin-bottom: 1rem;
+        max-height: none;
+    }
+    
+    #resultsList {
+        margin-bottom: 0;
+    }
 }

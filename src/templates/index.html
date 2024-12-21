@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GW2 Crafting Calculator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -88,20 +89,24 @@
             </div>
         </div>
         
-        <!-- Filter Section -->
-        <div class="filter-section mb-4">
-            <h3>Filter</h3>
             <div class="row">
+            <!-- Sidebar mit Filtern -->
+            <div class="col-md-3">
+                <div class="filter-section sticky-top" style="top: 20px;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Filter</h5>
+                        </div>
+                        <div class="card-body">
                 <!-- Huntsman Filter -->
-                <div class="col-md-4">
-                    <div class="profession-group">
+                            <div class="profession-group mb-4">
                         <div class="form-check profession-main">
                             <input class="form-check-input profession-filter" type="checkbox" value="Huntsman" id="huntsmanFilter" checked>
-                            <label class="form-check-label" for="huntsmanFilter">
-                                <strong>Huntsman</strong>
+                                    <label class="form-check-label fw-bold" for="huntsmanFilter">
+                                        Huntsman
                             </label>
                         </div>
-                        <div class="weapon-subgroup ms-4">
+                                <div class="weapon-subgroup ms-3 mt-2">
                             <div class="form-check">
                                 <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Longbow" id="longbowFilter" checked>
                                 <label class="form-check-label" for="longbowFilter">Longbow</label>
@@ -125,21 +130,19 @@
                             <div class="form-check">
                                 <input class="form-check-input weapon-filter huntsman-weapon" type="checkbox" value="Restored Boreal Warhorn" id="warhornFilter" checked>
                                 <label class="form-check-label" for="warhornFilter">Warhorn</label>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Weaponsmith Filter -->
-                <div class="col-md-4">
-                    <div class="profession-group">
+                            <div class="profession-group mb-4">
                         <div class="form-check profession-main">
                             <input class="form-check-input profession-filter" type="checkbox" value="Weaponsmith" id="weaponsmithFilter" checked>
-                            <label class="form-check-label" for="weaponsmithFilter">
-                                <strong>Weaponsmith</strong>
+                                    <label class="form-check-label fw-bold" for="weaponsmithFilter">
+                                        Weaponsmith
                             </label>
                         </div>
-                        <div class="weapon-subgroup ms-4">
+                                <div class="weapon-subgroup ms-3 mt-2">
                             <div class="form-check">
                                 <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Axe" id="axeFilter" checked>
                                 <label class="form-check-label" for="axeFilter">Axe</label>
@@ -167,21 +170,19 @@
                             <div class="form-check">
                                 <input class="form-check-input weapon-filter weaponsmith-weapon" type="checkbox" value="Restored Boreal Sword" id="swordFilter" checked>
                                 <label class="form-check-label" for="swordFilter">Sword</label>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Artificer Filter -->
-                <div class="col-md-4">
                     <div class="profession-group">
                         <div class="form-check profession-main">
                             <input class="form-check-input profession-filter" type="checkbox" value="Artificer" id="artificerFilter" checked>
-                            <label class="form-check-label" for="artificerFilter">
-                                <strong>Artificer</strong>
+                                    <label class="form-check-label fw-bold" for="artificerFilter">
+                                        Artificer
                             </label>
                         </div>
-                        <div class="weapon-subgroup ms-4">
+                                <div class="weapon-subgroup ms-3 mt-2">
                             <div class="form-check">
                                 <input class="form-check-input weapon-filter artificer-weapon" type="checkbox" value="Restored Boreal Focus" id="focusFilter" checked>
                                 <label class="form-check-label" for="focusFilter">Focus</label>
@@ -193,6 +194,7 @@
                             <div class="form-check">
                                 <input class="form-check-input weapon-filter artificer-weapon" type="checkbox" value="Restored Boreal Staff" id="staffFilter" checked>
                                 <label class="form-check-label" for="staffFilter">Staff</label>
+                                    </div>
                             </div>
                         </div>
                     </div>
@@ -200,10 +202,12 @@
             </div>
         </div>
 
-        <!-- Shopping Liste - nach den Filtern, vor den Ergebnissen -->
+            <!-- Hauptinhalt -->
+            <div class="col-md-9">
+                <!-- Shopping Liste -->
         <div class="shopping-list-section mb-4">
             <div class="card">
-                <div class="card-header">
+                        <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Shopping Liste</h3>
                 </div>
                 <div class="card-body">
@@ -246,10 +250,10 @@
             </div>
         </div>
 
-        <!-- Nach der Shopping Liste, vor den Ergebnissen -->
+                <!-- Profit Übersicht -->
         <div class="total-profits-section mb-4">
             <div class="card">
-                <div class="card-header">
+                        <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Profit Übersicht</h3>
                 </div>
                 <div class="card-body">
@@ -270,32 +274,6 @@
 
         <!-- Results Section -->
         <div id="resultsList"></div>
-    </div>
-
-    <!-- Modal für Verkaufspreis -->
-    <div class="modal fade" id="sellPriceModal" tabindex="-1" aria-labelledby="sellPriceModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="sellPriceModalLabel">Verkaufspreis eingeben</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="currentWeaponName">
-                    <input type="hidden" id="currentComponent">
-                    <div class="input-group mb-3">
-                        <input type="number" class="form-control" id="sell_price_gold" placeholder="Gold" min="0">
-                        <span class="input-group-text">G</span>
-                        <input type="number" class="form-control" id="sell_price_silver" placeholder="Silber" min="0" max="99">
-                        <span class="input-group-text">S</span>
-                        <input type="number" class="form-control" id="sell_price_copper" placeholder="Kupfer" min="0" max="99">
-                        <span class="input-group-text">C</span>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                    <button type="button" class="btn btn-primary" id="calculateProfitBtn">Berechnen</button>
-                </div>
             </div>
         </div>
     </div>
@@ -354,11 +332,76 @@
 
         // Funktion zum Aktualisieren der Shopping-Liste
         function updateShoppingList(materials) {
-            // Aktualisiere Materialmengen
-            document.getElementById('totalOrichalcum').textContent = materials.totalOrichalcum;
-            document.getElementById('totalAncientWood').textContent = materials.totalAncientWood;
-            document.getElementById('totalLeather').textContent = materials.totalLeather;
-            document.getElementById('totalInscriptions').textContent = materials.totalInscriptions;
+            const rawMaterialsList = document.getElementById('rawMaterialsList');
+            const inscriptionsList = document.getElementById('inscriptionsList');
+            const componentsList = document.getElementById('componentsList');
+            
+            // Aktualisiere Rohmaterialien
+            rawMaterialsList.innerHTML = `
+                <li class="mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Orichalcum Ore:</strong> ${materials.totalOrichalcum}
+                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Orichalcum Ore">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </li>
+                <li class="mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Ancient Wood Log:</strong> ${materials.totalAncientWood}
+                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Ancient Wood Log">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </li>
+                <li class="mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Hardened Leather Section:</strong> ${materials.totalLeather}
+                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Hardened Leather Section">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </li>
+            `;
+            
+            // Aktualisiere Inscriptions
+            inscriptionsList.innerHTML = `
+                <li class="mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Berserker's Orichalcum Imbued Inscription:</strong> ${materials.totalInscriptions}
+                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Berserker's Orichalcum Imbued Inscription">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </li>
+            `;
+            
+            // Aktualisiere zu kaufende Komponenten
+            componentsList.innerHTML = materials.buyComponents.map(comp => `
+                <li class="mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${comp.name}:</strong> ${comp.amount}
+                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${comp.name}">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </li>
+            `).join('');
+            
+            // Event Listener für Copy Buttons
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const textToCopy = this.dataset.name;
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        // Optional: Visuelles Feedback
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="bi bi-check"></i>';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                        }, 1000);
+                    });
+                });
+            });
             
             // Hole aktuelle Preise
             const prices = {
@@ -409,61 +452,74 @@
             };
         }
 
-        // Event Handler für Calculate Profit Button im Modal
-        document.getElementById('calculateProfitBtn').addEventListener('click', function() {
-            const weaponName = document.getElementById('currentWeaponName').value;
-            const gold = parseInt(document.getElementById('sell_price_gold').value) || 0;
-            const silver = parseInt(document.getElementById('sell_price_silver').value) || 0;
-            const copper = parseInt(document.getElementById('sell_price_copper').value) || 0;
+        // Event Handler für Calculate Profit Buttons
+        document.addEventListener('click', async function(e) {
+            if (e.target.classList.contains('calculate-profit')) {
+                const weaponName = e.target.dataset.weapon;
+                if (!weaponName) {
+                    console.error('Missing weapon data');
+                    return;
+                }
+                
+                try {
+                    // Lade den aktuellen Verkaufspreis vom Trading Post
+                    const response = await fetch(`/fetch-weapon-price/${encodeURIComponent(weaponName)}`);
+                    if (!response.ok) throw new Error('Failed to fetch weapon price');
+                    const sellPrice = await response.json();
+                    
+                    // Finde die Herstellungskosten für die Waffe
+                    const weaponCard = e.target.closest('.card');
+                    const costText = weaponCard.querySelector('.small.mb-2').textContent;
+                    const costMatches = costText.match(/Cost:\s+(\d+)G\s+(\d+)S\s+(\d+)C/);
+                    if (!costMatches) {
+                        console.error('Could not parse craft cost');
+                        return;
+                    }
+                    
+                    const craftCost = {
+                        gold: parseInt(costMatches[1]) || 0,
+                        silver: parseInt(costMatches[2]) || 0,
+                        copper: parseInt(costMatches[3]) || 0
+                    };
 
-            // Finde die Herstellungskosten für die Waffe
-            const weaponCard = document.querySelector(`[data-weapon="${weaponName}"]`).closest('.card');
-            const costText = weaponCard.querySelector('.card-text').textContent;
-            const costMatches = costText.match(/Total Cost:\s+(\d+)G\s+(\d+)S\s+(\d+)C/);
-            const craftCost = {
-                gold: parseInt(costMatches[1]) || 0,
-                silver: parseInt(costMatches[2]) || 0,
-                copper: parseInt(costMatches[3]) || 0
-            };
+                    // Berechne den Profit
+                    const profitData = calculateProfit(sellPrice, craftCost);
 
-            // Berechne den Profit
-            const sellPrice = { gold, silver, copper };
-            const profitData = calculateProfit(sellPrice, craftCost);
+                    // Aktualisiere den Profit in der Ergebniskarte
+                    const netProfitSpan = weaponCard.querySelector('.net-profit');
+                    netProfitSpan.className = `net-profit ms-2 ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
+                    netProfitSpan.textContent = `(Profit: ${formatCurrency(profitData.gold, profitData.silver, profitData.copper)})`;
 
-            // Aktualisiere die Profit-Anzeige
-            const profitsList = document.getElementById('profitsList');
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <strong>${weaponName.replace(/_/g, ' ')}:</strong>
-                <div>Sell Price: ${formatCurrency(sellPrice.gold, sellPrice.silver, sellPrice.copper)}</div>
-                <div>Craft Cost: ${formatCurrency(craftCost.gold, craftCost.silver, craftCost.copper)}</div>
-                <div>Listing Fee (5%): ${formatCurrency(
-                    profitData.fees.listingFee.gold,
-                    profitData.fees.listingFee.silver,
-                    profitData.fees.listingFee.copper
-                )}</div>
-                <div>Exchange Fee (10%): ${formatCurrency(
-                    profitData.fees.exchangeFee.gold,
-                    profitData.fees.exchangeFee.silver,
-                    profitData.fees.exchangeFee.copper
-                )}</div>
-                <div class="profit-amount ${profitData.gold < 0 ? 'text-danger' : 'text-success'}">
-                    Net Profit: ${formatCurrency(profitData.gold, profitData.silver, profitData.copper)}
-                </div>
-            `;
-            profitsList.appendChild(listItem);
+                    // Aktualisiere die Profit-Anzeige
+                    const profitsList = document.getElementById('profitsList');
+                    const existingItem = Array.from(profitsList.children).find(item => 
+                        item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
+                    );
+                    
+                    const listItem = document.createElement('li');
+                    listItem.className = 'd-flex justify-content-between align-items-center mb-2';
+                    listItem.innerHTML = `
+                        <strong>${weaponName.replace(/_/g, ' ')}</strong>
+                        <span class="${profitData.gold < 0 ? 'text-danger' : 'text-success'} fw-bold">
+                            ${formatCurrency(profitData.gold, profitData.silver, profitData.copper)}
+                        </span>
+                    `;
 
-            // Aktualisiere Gesamtgewinn
-            updateTotalProfit();
+                    // Ersetze existierenden Eintrag oder füge neuen hinzu
+                    if (existingItem) {
+                        profitsList.replaceChild(listItem, existingItem);
+                    } else {
+                        profitsList.appendChild(listItem);
+                    }
 
-            // Modal schließen
-            const modal = bootstrap.Modal.getInstance(document.getElementById('sellPriceModal'));
-            modal.hide();
-
-            // Felder zurücksetzen
-            document.getElementById('sell_price_gold').value = '';
-            document.getElementById('sell_price_silver').value = '';
-            document.getElementById('sell_price_copper').value = '';
+                    // Aktualisiere Gesamtgewinn
+                    updateTotalProfit();
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to calculate profit. Please try again.');
+                }
+            }
         });
 
         // Funktion zum Aktualisieren des Gesamtgewinns
@@ -471,8 +527,9 @@
             let totalProfitCopper = 0;
             
             // Sammle alle Profit-Beträge
-            document.querySelectorAll('#profitsList .profit-amount').forEach(element => {
-                const matches = element.textContent.match(/Profit:\s+(-?\d+)G\s+(\d+)S\s+(\d+)C/);
+            document.querySelectorAll('#profitsList li span').forEach(element => {
+                const text = element.textContent.trim();
+                const matches = text.match(/(-?\d+)G\s+(\d+)S\s+(\d+)C/);
                 if (matches) {
                     const isNegative = matches[1].startsWith('-');
                     const gold = parseInt(matches[1].replace('-', '')) || 0;
@@ -499,7 +556,6 @@
         // Funktion zum Aktualisieren der Ergebnisliste
         function updateResultsList(results) {
             const resultsList = document.getElementById('resultsList');
-            const profitsList = document.getElementById('profitsList');
             resultsList.innerHTML = '';
 
             // Sammle aktive Filter
@@ -511,30 +567,31 @@
                 totalOrichalcum: 0,
                 totalAncientWood: 0,
                 totalLeather: 0,
-                totalInscriptions: 0
+                totalInscriptions: 0,
+                buyComponents: [] // Array für zu kaufende Komponenten
             };
 
             // Filtere und zeige Ergebnisse
             const resultsContainer = document.createElement('div');
-            resultsContainer.className = 'row g-3'; // g-3 für Spacing zwischen den Karten
+            resultsContainer.className = 'row g-3';
             resultsList.appendChild(resultsContainer);
 
             Object.entries(results).forEach(([weaponName, data]) => {
                 if (activeProfessions.includes(data.profession) && activeWeapons.includes(weaponName)) {
                     // Erstelle Ergebniskarte im Raster
                     const cardContainer = document.createElement('div');
-                    cardContainer.className = 'col-md-6 col-lg-4'; // 2 Karten pro Zeile auf mittleren, 3 auf großen Bildschirmen
+                    cardContainer.className = 'col-md-6 col-lg-4';
                     
                     const card = document.createElement('div');
-                    card.className = 'card h-100'; // h-100 für einheitliche Kartenhöhe
+                    card.className = 'card h-100';
                     
                     const cardBody = document.createElement('div');
-                    cardBody.className = 'card-body p-3'; // Reduziertes Padding
+                    cardBody.className = 'card-body p-3';
 
-                    // Waffentitel und Gesamtkosten - kompakter
+                    // Waffentitel und Gesamtkosten
                     cardBody.innerHTML = `
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title mb-0">${weaponName.replace(/_/g, ' ')}</h6>
+                            <h6 class="card-title mb-0">${weaponName}</h6>
                             <button type="button" class="btn btn-outline-primary btn-sm calculate-profit" data-weapon="${weaponName}">
                                 Profit
                             </button>
@@ -542,10 +599,11 @@
                         <div class="small mb-2">
                             <strong>Cost:</strong> 
                             ${formatCurrency(data.total.gold, data.total.silver, data.total.copper)}
+                            <span class="net-profit ms-2"></span>
                         </div>
                     `;
 
-                    // Komponenten Details - kompakter
+                    // Komponenten Details
                     const componentsList = document.createElement('div');
                     componentsList.className = 'components-list small';
                     
@@ -559,56 +617,66 @@
                             displayName = "Berserker's Orichalcum Imbued Inscription";
                         }
                         
-                        // HTML für die Komponente - kompakter
+                        // HTML für die Komponente
                         let componentHtml = `
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span>${displayName}:</span>
-                                <div class="d-flex align-items-center">
-                                    <span class="me-2">${formatCurrency(compData.gold, compData.silver, compData.copper)}</span>`;
+                            <div class="d-flex justify-content-between align-items-start">
+                                <span class="${compData.buyFromTP ? 'text-warning' : ''}">${displayName}:</span>
+                                <div class="text-end">
+                                    <span class="${compData.buyFromTP ? 'text-warning' : ''}">${formatCurrency(compData.gold, compData.silver, compData.copper)}</span>
+                                </div>
+                            </div>`;
                         
-                        // Füge Edit Price Button nur für Nicht-Inscription Komponenten hinzu
-                        if (compName !== 'inscription') {
-                            componentHtml += `
-                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 edit-price-btn" 
-                                        data-component="${compName}" data-weapon="${weaponName}">
-                                    Edit
-                                </button>`;
-                        }
-                        
-                        componentHtml += `</div></div>`;
                         compDiv.innerHTML = componentHtml;
                         
-                        // Materialien für die Komponente - kompakter
-                        if (compData.materials) {
+                        // Verarbeite Materialien und zu kaufende Komponenten
+                        if (compData.buyFromTP && compName !== 'inscription') {
+                            // Füge zu kaufende Komponente zur Liste hinzu
+                            const existingComp = materials.buyComponents.find(c => c.name === displayName);
+                            if (existingComp) {
+                                existingComp.amount += 1;
+                            } else {
+                                materials.buyComponents.push({
+                                    name: displayName,
+                                    amount: 1
+                                });
+                            }
+                            
+                            // Zeige Trading Post Hinweis
                             const materialsList = document.createElement('div');
-                            materialsList.className = 'component-materials ms-2 text-muted';
+                            materialsList.className = 'component-materials ms-3 text-warning';
                             materialsList.style.fontSize = '0.85em';
-                            Object.entries(compData.materials).forEach(([matName, amount]) => {
-                                // Formatiere Materialnamen
-                                let displayMatName = matName;
-                                switch(matName) {
-                                    case 'ori_ore':
-                                        displayMatName = 'Orichalcum Ore';
-                                        break;
-                                    case 'ancient_wood':
-                                        displayMatName = 'Ancient Wood Log';
-                                        break;
-                                    case 'leather':
-                                        displayMatName = 'Hardened Leather Section';
-                                        break;
-                                    case 'inscription':
-                                        displayMatName = "Berserker's Orichalcum Imbued Inscription";
-                                        break;
-                                }
-                                materialsList.innerHTML += `${displayMatName}: ${amount}<br>`;
-                                
-                                // Aktualisiere Gesamtmaterialien
-                                if (matName === 'ori_ore') materials.totalOrichalcum += amount;
-                                if (matName === 'ancient_wood') materials.totalAncientWood += amount;
-                                if (matName === 'leather') materials.totalLeather += amount;
-                                if (matName === 'inscription') materials.totalInscriptions += amount;
-                            });
+                            materialsList.innerHTML = 'Trading Post';
                             compDiv.appendChild(materialsList);
+                        } else {
+                            // Verarbeite Materialien für zu craftende Komponenten
+                            if (compData.materials) {
+                                const materialsList = document.createElement('div');
+                                materialsList.className = 'component-materials ms-3 text-muted';
+                                materialsList.style.fontSize = '0.85em';
+                                
+                                const formattedMaterials = Object.entries(compData.materials).map(([matName, amount]) => {
+                                    // Zähle Materialien
+                                    switch(matName) {
+                                        case 'ori_ore':
+                                            materials.totalOrichalcum += amount;
+                                            return `Orichalcum Ore: ${amount}`;
+                                        case 'ancient_wood':
+                                            materials.totalAncientWood += amount;
+                                            return `Ancient Wood Log: ${amount}`;
+                                        case 'leather':
+                                            materials.totalLeather += amount;
+                                            return `Hardened Leather Section: ${amount}`;
+                                        case 'inscription':
+                                            materials.totalInscriptions += amount;
+                                            return `Berserker's Orichalcum Imbued Inscription: ${amount}`;
+                                        default:
+                                            return `${matName}: ${amount}`;
+                                    }
+                                }).join(', ');
+                                
+                                materialsList.innerHTML = formattedMaterials;
+                                compDiv.appendChild(materialsList);
+                            }
                         }
                         
                         componentsList.appendChild(compDiv);
@@ -690,27 +758,22 @@
             });
         });
 
-        // Event Handler für Calculate Profit Buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('calculate-profit')) {
-                const weaponName = e.target.dataset.weapon;
-                document.getElementById('currentWeaponName').value = weaponName;
-                const modal = new bootstrap.Modal(document.getElementById('sellPriceModal'));
-                modal.show();
-            }
-        });
+        // Event Listener für Collapse-Funktionalität
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = [
+                document.querySelector('.shopping-list-section'),
+                document.querySelector('.total-profits-section')
+            ];
 
-        // Event Handler für Edit Price Buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('edit-price-btn')) {
-                const component = e.target.dataset.component;
-                const weaponName = e.target.dataset.weapon;
-                // Öffne Modal für Preisbearbeitung
-                const modal = new bootstrap.Modal(document.getElementById('sellPriceModal'));
-                document.getElementById('currentWeaponName').value = weaponName;
-                document.getElementById('currentComponent').value = component;
-                modal.show();
-            }
+            sections.forEach(section => {
+                const header = section.querySelector('.card-header');
+                header.addEventListener('click', () => {
+                    section.classList.toggle('collapsed');
+                });
+            });
+
+            // Initial collapse
+            sections.forEach(section => section.classList.add('collapsed'));
         });
     </script>
 </body>
