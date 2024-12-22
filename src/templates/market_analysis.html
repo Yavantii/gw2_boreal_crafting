@@ -28,6 +28,15 @@
         .table-warning {
             background-color: rgba(255, 193, 7, 0.1);
         }
+        /* Neue Styles für die Charts */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .card {
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -68,6 +77,7 @@
                                         <th>Waffe</th>
                                         <th>Eingestellt seit</th>
                                         <th>Verkaufspreis</th>
+                                        <th>Position im TP</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -79,23 +89,27 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100">
+            <div class="col-md-6 mb-4">
+                <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Aktuelle Marktpreise</h5>
                     </div>
                     <div class="card-body">
+                        <div class="chart-container">
                         <canvas id="currentPricesChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100">
+            <div class="col-md-6 mb-4">
+                <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Verkaufsvolumen (24h)</h5>
                     </div>
                     <div class="card-body">
+                        <div class="chart-container">
                         <canvas id="volumeChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -190,9 +204,12 @@
             const silver = Math.floor((copper % 10000) / 100);
             const copperRest = copper % 100;
             
-            return `${gold} <img src="{{ url_for('static', filename='gold.png') }}" alt="Gold" class="currency-icon"> 
-                    ${silver} <img src="{{ url_for('static', filename='silver.png') }}" alt="Silver" class="currency-icon"> 
-                    ${copperRest} <img src="{{ url_for('static', filename='copper.png') }}" alt="Copper" class="currency-icon">`;
+            return `
+                <span class="price">
+                    ${gold}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
+                    ${silver}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
+                    ${copperRest}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
+                </span>`;
         }
 
         // Funktion zum Laden der Item-Details
@@ -212,7 +229,7 @@
             if (hours < 48) {
                 return {
                     text: 'Aktiv',
-                    class: 'bg-success text-white'
+                    class: 'bg-success text-dark'
                 };
             }
             return {
@@ -240,6 +257,15 @@
                     // Hole Item-Details
                     const itemDetails = await getItemDetails(listing.item_id);
                     
+                    // Hole alle Verkaufsangebote für dieses Item
+                    const listingsResponse = await fetch(`https://api.guildwars2.com/v2/commerce/listings/${listing.item_id}`);
+                    const listingsData = await listingsResponse.json();
+                    
+                    // Finde Position des eigenen Angebots
+                    const position = listingsData.sells.findIndex(offer => 
+                        offer.unit_price === listing.price
+                    ) + 1;
+                    
                     // Prüfe ob es eine Boreal-Waffe ist
                     if (itemDetails && itemDetails.name.includes('Boreal')) {
                         // Füge zu aktiven Verkäufen hinzu
@@ -248,6 +274,7 @@
                             name: itemDetails.name,
                             created: listing.created,
                             price: listing.price,
+                            position: position,
                             hoursActive: Math.floor((new Date() - new Date(listing.created)) / (1000 * 60 * 60))
                         });
 
@@ -257,7 +284,7 @@
 
                         const row = document.createElement('tr');
                         // Füge Klasse basierend auf Status hinzu
-                        row.className = status.class.replace('bg-', 'table-');
+                        row.className = hoursActive >= 48 ? 'table-warning' : 'table-success';
                         
                         row.innerHTML = `
                             <td>
@@ -266,8 +293,9 @@
                             </td>
                             <td>${formatTimeDifference(listing.created)}</td>
                             <td>${formatGoldPrice(listing.price)}</td>
+                            <td>${position}. Position</td>
                             <td>
-                                <span class="badge ${status.class}">${status.text}</span>
+                                <span class="badge ${status.class} text-dark">${status.text}</span>
                                 ${hoursActive >= 48 ? 
                                     '<br><small class="text-muted">Neu einstellen kostet: ' + 
                                     formatGoldPrice(Math.ceil(listing.price * 0.05)) + '</small>' : 
@@ -340,17 +368,17 @@
 
                 // Aktualisiere Marktpreis-Chart
                 const priceChart = new Chart(document.getElementById('currentPricesChart'), {
-                    type: 'bar',
-                    data: {
+                type: 'bar',
+                data: {
                         labels: itemDetails.map(item => item.name.replace('Restored Boreal ', '')),
-                        datasets: [{
+                    datasets: [{
                             label: 'Verkaufspreis',
                             data: pricesData.map(item => item.sells.unit_price / 10000),
-                            backgroundColor: 'rgba(74, 158, 255, 0.7)'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
+                        backgroundColor: 'rgba(74, 158, 255, 0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
@@ -359,8 +387,16 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return context.raw.toFixed(2) + ' Gold';
+                                        const gold = Math.floor(context.raw);
+                                        const silver = Math.floor((context.raw % 1) * 100);
+                                        const copper = Math.floor(((context.raw % 1) * 100 % 1) * 100);
+                                        return formatGoldPrice(gold * 10000 + silver * 100 + copper);
                                     }
+                                },
+                                external: function(context) {
+                                    // Erlaube HTML im Tooltip
+                                    const tooltipEl = context.tooltip;
+                                    tooltipEl.options.displayColors = false;
                                 }
                             }
                         },
@@ -370,6 +406,12 @@
                                 title: {
                                     display: true,
                                     text: 'Preis in Gold'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
                                 }
                             }
                         }
@@ -401,6 +443,12 @@
                                 title: {
                                     display: true,
                                     text: 'Anzahl Angebote'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
                                 }
                             }
                         }

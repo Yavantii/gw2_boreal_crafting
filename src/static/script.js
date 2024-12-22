@@ -18,6 +18,26 @@ const weaponOrder = [
     "Restored Boreal Staff"        // Artificer - 16
 ];
 
+// Mapping von englischen zu deutschen Namen
+const nameMapping = {
+    'Restored Boreal Rifle': 'Wiederhergestelltes Boreal-Gewehr',
+    'Restored Boreal Pistol': 'Wiederhergestellte Boreal-Pistole',
+    'Restored Boreal Short Bow': 'Wiederhergestellter Boreal-Kurzbogen',
+    'Restored Boreal Longbow': 'Wiederhergestellter Boreal-Langbogen',
+    'Restored Boreal Focus': 'Wiederhergestellter Boreal-Fokus',
+    'Restored Boreal Staff': 'Wiederhergestellter Boreal-Stab',
+    'Restored Boreal Warhorn': 'Wiederhergestelltes Boreal-Kriegshorn',
+    'Restored Boreal Axe': 'Wiederhergestellte Boreal-Axt',
+    'Restored Boreal Dagger': 'Wiederhergestellter Boreal-Dolch',
+    'Restored Boreal Greatsword': 'Wiederhergestelltes Boreal-Großschwert',
+    'Restored Boreal Hammer': 'Wiederhergestellter Boreal-Hammer',
+    'Restored Boreal Mace': 'Wiederhergestellter Boreal-Streitkolben',
+    'Restored Boreal Shield': 'Wiederhergestelltes Boreal-Schild',
+    'Restored Boreal Sword': 'Wiederhergestelltes Boreal-Schwert',
+    'Restored Boreal Scepter': 'Wiederhergestelltes Boreal-Zepter',
+    'Restored Boreal Torch': 'Wiederhergestellte Boreal-Fackel'
+};
+
 // Globale Variablen
 let currentResults = null;
 
@@ -31,12 +51,19 @@ function formatCurrency(gold, silver, copper) {
         copper = totalCopper % 100;
     }
     
-    return `<span class="gold">${gold}G</span> <span class="silver">${silver}S</span> <span class="copper">${copper}C</span>`;
+    return `<span class="price">
+        ${gold}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
+        ${silver}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
+        ${copper}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
+    </span>`;
 }
 
 // Funktion zum Anzeigen der Ergebnisse
 function displayResults(results) {
     if (!results) return;
+    
+    // Speichere die Ergebnisse global
+    currentResults = results;
     
     const resultsDiv = document.getElementById('resultsList');
     if (!resultsDiv) {
@@ -45,8 +72,16 @@ function displayResults(results) {
     }
     
     // Sammle aktive Filter
-    const activeWeapons = Array.from(document.querySelectorAll('.weapon-filter:checked')).map(cb => cb.value);
     const activeProfessions = Array.from(document.querySelectorAll('.profession-filter:checked')).map(cb => cb.value);
+    const hideActiveListings = document.getElementById('hideActiveListingsFilter').checked;
+    
+    // Hole aktive Verkäufe aus dem localStorage
+    const activeSales = JSON.parse(localStorage.getItem('activeBorealSales') || '[]');
+    const activeWeaponNames = activeSales.map(sale => {
+        // Konvertiere deutsche Namen zurück zu englischen
+        const englishName = Object.entries(nameMapping).find(([eng, ger]) => ger === sale.name)?.[0];
+        return englishName;
+    });
 
     // Berechne Gesamtkosten und Materialien
     let materials = {
@@ -54,7 +89,7 @@ function displayResults(results) {
         totalAncientWood: 0,
         totalLeather: 0,
         totalInscriptions: 0,
-        buyComponents: [] // Array für zu kaufende Komponenten
+        buyComponents: []
     };
 
     // Filtere und zeige Ergebnisse
@@ -67,10 +102,19 @@ function displayResults(results) {
     const sortedResults = weaponOrder
         .filter(weaponName => {
             const data = results[weaponName];
-            return data && activeProfessions.includes(data.profession) && activeWeapons.includes(weaponName);
+            if (!data) return false;
+            
+            // Prüfe Berufsfilter
+            if (!activeProfessions.includes(data.profession)) return false;
+            
+            // Prüfe aktive Verkäufe Filter
+            if (hideActiveListings && activeWeaponNames.includes(weaponName)) return false;
+            
+            return true;
         })
         .map(weaponName => [weaponName, results[weaponName]]);
 
+    // Zeige die gefilterten Ergebnisse an
     sortedResults.forEach(([weaponName, data]) => {
         // Zähle eine Inscription pro Waffe
         materials.totalInscriptions += 1;
@@ -384,48 +428,29 @@ document.getElementById('calculateButton').addEventListener('click', async () =>
     }
 });
 
-// Event Listener für Filter-Änderungen
-document.querySelectorAll('.profession-filter, .weapon-filter').forEach(filter => {
-    filter.addEventListener('change', function() {
+// Event-Listener für Filter
+function setupFilterListeners() {
+    // Berufsfilter
+    document.querySelectorAll('.profession-filter').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (currentResults) {
+                displayResults(currentResults);
+            }
+        });
+    });
+
+    // Aktive Verkäufe Filter
+    document.getElementById('hideActiveListingsFilter').addEventListener('change', () => {
         if (currentResults) {
             displayResults(currentResults);
         }
     });
-});
+}
 
-// Event Listener für Profession Filter (Parent Checkboxes)
-document.querySelectorAll('.profession-filter').forEach(professionCheckbox => {
-    professionCheckbox.addEventListener('change', function() {
-        const profession = this.value.toLowerCase();
-        const weaponCheckboxes = document.querySelectorAll(`.${profession}-weapon`);
-        weaponCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-    });
-});
-
-// Event Listener für den Refresh Button
-document.getElementById('refreshPrices').addEventListener('click', async () => {
-    try {
-        const response = await fetch('/refresh-prices');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const prices = await response.json();
-        
-        // Aktualisiere die Preisanzeigen
-        for (const [itemName, price] of Object.entries(prices)) {
-            const priceElement = document.querySelector(`[data-item="${itemName}"]`);
-            if (priceElement) {
-                priceElement.innerHTML = `${price.gold}G ${price.silver}S ${price.copper}C`;
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to refresh prices. Please try again.');
-    }
-});
-
-// Initialisierung beim Laden der Seite
+// Initialisiere die Filter-Listener beim Laden der Seite
 document.addEventListener('DOMContentLoaded', () => {
+    setupFilterListeners();
+
     // Event Listener für Collapse-Funktionalität
     const sections = [
         document.querySelector('.shopping-list-section'),

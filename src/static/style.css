@@ -971,3 +971,47 @@ td {
 .card-body > div {
     border: none !important;
 }
+
+/* Filter Styles */
+.filter-section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.filter-section .card-header {
+    background-color: var(--card-header);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.filter-section .card-body {
+    background-color: var(--card-bg);
+}
+
+.filter-section h6 {
+    color: var(--accent-color);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.filter-section .form-check-label {
+    color: var(--text-primary);
+}
+
+.filter-section .form-check-input {
+    background-color: var(--darker-bg);
+    border-color: var(--border-color);
+}
+
+.filter-section .form-check-input:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.filter-section .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.filter-section .form-check:last-child {
+    margin-bottom: 0;
+}
