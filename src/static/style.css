@@ -1,3 +1,272 @@
+:root {
+    --dark-bg: #1a1a1a;
+    --darker-bg: #1e1e1e;
+    --card-bg: #242424;
+    --card-header: #2d2d2d;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --border-color: #333333;
+    --accent-color: #4a9eff;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --gold-color: #ffd700;
+    --silver-color: #c0c0c0;
+    --copper-color: #cd7f32;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    background-color: var(--card-header);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.price-item {
+    background-color: var(--card-bg);
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.price-label {
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+.price {
+    font-weight: 500;
+}
+
+input[type="number"] {
+    background-color: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+input[type="number"]:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    outline: none;
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #3d8ae5;
+    transform: translateY(-1px);
+}
+
+.weapon-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.weapon-header {
+    background-color: var(--card-header);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.component-item {
+    background-color: var(--card-bg);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px;
+    margin: 8px 0;
+}
+
+.component-item:last-child {
+    border-bottom: none;
+}
+
+.profit-details {
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.text-danger {
+    color: var(--danger-color) !important;
+}
+
+.shopping-list {
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+.refresh-button {
+    color: var(--text-primary);
+    background-color: var(--card-header);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.refresh-button:hover {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--darker-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+}
+
+/* Table Styling */
+table {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+th {
+    background-color: var(--card-header);
+    color: var(--text-primary);
+}
+
+td {
+    border-color: var(--border-color);
+}
+
+/* Tooltip Styling */
+.tooltip-inner {
+    background-color: var(--darker-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.bs-tooltip-auto[x-placement^=top] .arrow::before, 
+.bs-tooltip-top .arrow::before {
+    border-top-color: var(--border-color);
+}
+
+/* Modal Styling */
+.modal-content {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    background-color: var(--card-header);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color);
+}
+
+/* Dropdown Styling */
+.dropdown-menu {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+    background-color: var(--card-header);
+    color: var(--text-primary);
+}
+
+/* Badge Styling */
+.badge {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Alert Styling */
+.alert {
+    background-color: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.alert-success {
+    border-left: 4px solid var(--success-color);
+}
+
+.alert-danger {
+    border-left: 4px solid var(--danger-color);
+}
+
+/* Form Control Styling */
+.form-control {
+    background-color: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    background-color: var(--darker-bg);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+/* Custom Checkbox Styling */
+.custom-checkbox .custom-control-label::before {
+    background-color: var(--darker-bg);
+    border: 1px solid var(--border-color);
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Progress Bar Styling */
+.progress {
+    background-color: var(--darker-bg);
+}
+
+.progress-bar {
+    background-color: var(--accent-color);
+}
+
 .material-inputs .input-group {
     width: 300px;
 }
@@ -490,21 +759,18 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    background-color: var(--card-bg);
     border-radius: 4px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .price-label {
-    font-size: 0.85em;
-    color: #495057;
-    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9em;
 }
 
 .price {
-    font-size: 0.9em;
-    color: #198754;
     font-weight: 500;
 }
 
@@ -530,4 +796,55 @@
     top: 1rem;
     z-index: 1001;
     background: white;
+}
+
+/* Währungsfarben */
+.gold {
+    color: var(--gold-color) !important;
+}
+
+.silver {
+    color: var(--silver-color) !important;
+}
+
+.copper {
+    color: var(--copper-color) !important;
+}
+
+/* Entferne die alten Währungsklassen */
+.currency-gold, .currency-silver, .currency-copper, .currency-label {
+    color: inherit;
+}
+
+/* Ergebniskarten Preisanzeige */
+.card .small.mb-2 strong {
+    color: inherit;
+}
+
+.net-profit {
+    color: inherit;
+}
+
+/* Profit und Kosten Anzeigen */
+#totalCost, #totalProfit {
+    color: inherit;
+}
+
+/* Überschreibe Bootstrap Text-Farben für Währungen */
+.text-success .gold,
+.text-danger .gold,
+.text-primary .gold {
+    color: var(--gold-color) !important;
+}
+
+.text-success .silver,
+.text-danger .silver,
+.text-primary .silver {
+    color: var(--silver-color) !important;
+}
+
+.text-success .copper,
+.text-danger .copper,
+.text-primary .copper {
+    color: var(--copper-color) !important;
 }

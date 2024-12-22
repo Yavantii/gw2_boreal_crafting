@@ -20,40 +20,48 @@
             <div class="card-body py-2">
                 <div class="d-flex flex-wrap gap-3 align-items-center">
                     <div class="price-item">
-                        <span class="price-label">Inscription:</span>
+                        <span class="price-label">Berserker's Orichalcum Imbued Inscription:</span>
                         {% if prices and prices.inscription %}
-                            <span class="price" data-item="inscription">
-                                {{ prices.inscription.gold }}G {{ prices.inscription.silver }}S {{ prices.inscription.copper }}C
+                            <span class="price">
+                                <span class="gold">{{ prices.inscription.gold }}G</span>
+                                <span class="silver">{{ prices.inscription.silver }}S</span>
+                                <span class="copper">{{ prices.inscription.copper }}C</span>
                             </span>
                         {% else %}
                             <span class="text-muted">Loading...</span>
                         {% endif %}
                     </div>
                     <div class="price-item">
-                        <span class="price-label">Orichalcum:</span>
+                        <span class="price-label">Orichalcum Ore:</span>
                         {% if prices and prices.ori_ore %}
-                            <span class="price" data-item="ori_ore">
-                                {{ prices.ori_ore.gold }}G {{ prices.ori_ore.silver }}S {{ prices.ori_ore.copper }}C
+                            <span class="price">
+                                <span class="gold">{{ prices.ori_ore.gold }}G</span>
+                                <span class="silver">{{ prices.ori_ore.silver }}S</span>
+                                <span class="copper">{{ prices.ori_ore.copper }}C</span>
                             </span>
                         {% else %}
                             <span class="text-muted">Loading...</span>
                         {% endif %}
                     </div>
                     <div class="price-item">
-                        <span class="price-label">Ancient Wood:</span>
+                        <span class="price-label">Ancient Wood Log:</span>
                         {% if prices and prices.ancient_wood %}
-                            <span class="price" data-item="ancient_wood">
-                                {{ prices.ancient_wood.gold }}G {{ prices.ancient_wood.silver }}S {{ prices.ancient_wood.copper }}C
+                            <span class="price">
+                                <span class="gold">{{ prices.ancient_wood.gold }}G</span>
+                                <span class="silver">{{ prices.ancient_wood.silver }}S</span>
+                                <span class="copper">{{ prices.ancient_wood.copper }}C</span>
                             </span>
                         {% else %}
                             <span class="text-muted">Loading...</span>
                         {% endif %}
                     </div>
                     <div class="price-item">
-                        <span class="price-label">Leather:</span>
+                        <span class="price-label">Hardened Leather Section:</span>
                         {% if prices and prices.leather %}
-                            <span class="price" data-item="leather">
-                                {{ prices.leather.gold }}G {{ prices.leather.silver }}S {{ prices.leather.copper }}C
+                            <span class="price">
+                                <span class="gold">{{ prices.leather.gold }}G</span>
+                                <span class="silver">{{ prices.leather.silver }}S</span>
+                                <span class="copper">{{ prices.leather.copper }}C</span>
                             </span>
                         {% else %}
                             <span class="text-muted">Loading...</span>
@@ -208,7 +216,9 @@
                         </div>
                     </div>
                     <div class="mt-3 text-end">
-                        <h5 class="mb-0">Gesamtkosten: <span id="totalCost" class="text-primary">0g 0s 0c</span></h5>
+                        <h5 class="mb-0">Gesamtkosten: 
+                            <span id="totalCost">0G 0S 0C</span>
+                        </h5>
                     </div>
                 </div>
             </div>
@@ -223,7 +233,7 @@
                 <div class="card-body">
                     <ul class="list-unstyled mb-3" id="profitsList"></ul>
                     <div class="text-end">
-                        <h5 class="mb-0">Gesamtgewinn: <span id="totalProfit" class="h4">0g 0s 0c</span></h5>
+                        <h5 class="mb-0">Gesamtgewinn: <span id="totalProfit" class="h4">0G 0S 0C</span></h5>
                     </div>
                 </div>
             </div>
@@ -241,7 +251,7 @@
     <script>
         // Funktion zum Formatieren der Währung
         function formatCurrency(gold, silver, copper) {
-            return `${gold}G ${silver}S ${copper}C`;
+            return `<span class="gold">${gold}G</span> <span class="silver">${silver}S</span> <span class="copper">${copper}C</span>`;
         }
 
         // Funktion zum Berechnen der Gesamtkosten für die Shopping-Liste
@@ -374,7 +384,7 @@
             const silver = Math.floor((totalCopperCost % 10000) / 100);
             const copper = totalCopperCost % 100;
             
-            document.getElementById('totalCost').textContent = formatCurrency(gold, silver, copper);
+            document.getElementById('totalCost').innerHTML = formatCurrency(gold, silver, copper);
         }
 
         // Funktion zum Berechnen des Profits
@@ -413,6 +423,24 @@
         document.addEventListener('click', async function(e) {
             if (e.target.classList.contains('calculate-profit')) {
                 const weaponName = e.target.dataset.weapon;
+                const weaponCard = e.target.closest('.card');
+                const netProfitSpan = weaponCard.querySelector('.net-profit');
+                const profitsList = document.getElementById('profitsList');
+
+                // Wenn der Profit bereits berechnet wurde, entferne ihn
+                if (netProfitSpan.textContent) {
+                    netProfitSpan.textContent = '';
+                    // Entferne den Eintrag aus der Profitliste
+                    const existingItem = Array.from(profitsList.children).find(item => 
+                        item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
+                    );
+                    if (existingItem) {
+                        profitsList.removeChild(existingItem);
+                        updateTotalProfit();
+                    }
+                    return;
+                }
+
                 if (!weaponName) {
                     console.error('Missing weapon data');
                     return;
@@ -425,7 +453,6 @@
                     const sellPrice = await response.json();
                     
                     // Finde die Herstellungskosten für die Waffe
-                    const weaponCard = e.target.closest('.card');
                     const costText = weaponCard.querySelector('.small.mb-2').textContent;
                     const costMatches = costText.match(/Cost:\s+(\d+)G\s+(\d+)S\s+(\d+)C/);
                     if (!costMatches) {
@@ -443,31 +470,21 @@
                     const profitData = calculateProfit(sellPrice, craftCost);
 
                     // Aktualisiere den Profit in der Ergebniskarte
-                    const netProfitSpan = weaponCard.querySelector('.net-profit');
                     netProfitSpan.className = `net-profit ms-2 ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
-                    netProfitSpan.textContent = `(Profit: ${formatCurrency(profitData.gold, profitData.silver, profitData.copper)})`;
+                    netProfitSpan.innerHTML = `(Profit: ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)})`;
 
                     // Aktualisiere die Profit-Anzeige
-                    const profitsList = document.getElementById('profitsList');
-                    const existingItem = Array.from(profitsList.children).find(item => 
-                        item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
-                    );
-                    
                     const listItem = document.createElement('li');
                     listItem.className = 'd-flex justify-content-between align-items-center mb-2';
                     listItem.innerHTML = `
-                        <strong>${weaponName.replace(/_/g, ' ')}</strong>
-                        <span class="${profitData.gold < 0 ? 'text-danger' : 'text-success'} fw-bold">
-                            ${formatCurrency(profitData.gold, profitData.silver, profitData.copper)}
+                        <strong>${weaponName.replace(/_/g, ' ')}:</strong>
+                        <span class="${profitData.gold < 0 ? 'text-danger' : 'text-success'}">
+                            ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)}
                         </span>
                     `;
 
-                    // Ersetze existierenden Eintrag oder füge neuen hinzu
-                    if (existingItem) {
-                        profitsList.replaceChild(listItem, existingItem);
-                    } else {
-                        profitsList.appendChild(listItem);
-                    }
+                    // Füge neuen Eintrag hinzu
+                    profitsList.appendChild(listItem);
 
                     // Aktualisiere Gesamtgewinn
                     updateTotalProfit();
@@ -485,13 +502,15 @@
             
             // Sammle alle Profit-Beträge
             document.querySelectorAll('#profitsList li span').forEach(element => {
-                const text = element.textContent.trim();
-                const matches = text.match(/(-?\d+)G\s+(\d+)S\s+(\d+)C/);
-                if (matches) {
-                    const isNegative = matches[1].startsWith('-');
-                    const gold = parseInt(matches[1].replace('-', '')) || 0;
-                    const silver = parseInt(matches[2]) || 0;
-                    const copper = parseInt(matches[3]) || 0;
+                const goldMatch = element.querySelector('.gold');
+                const silverMatch = element.querySelector('.silver');
+                const copperMatch = element.querySelector('.copper');
+                
+                if (goldMatch && silverMatch && copperMatch) {
+                    const gold = parseInt(goldMatch.textContent) || 0;
+                    const silver = parseInt(silverMatch.textContent) || 0;
+                    const copper = parseInt(copperMatch.textContent) || 0;
+                    const isNegative = element.classList.contains('text-danger');
                     const profitCopper = (gold * 10000) + (silver * 100) + copper;
                     totalProfitCopper += isNegative ? -profitCopper : profitCopper;
                 }
@@ -502,7 +521,7 @@
             const silver = Math.floor((Math.abs(totalProfitCopper) % 10000) / 100);
             const copper = Math.abs(totalProfitCopper) % 100;
             const totalProfitElement = document.getElementById('totalProfit');
-            totalProfitElement.textContent = formatCurrency(
+            totalProfitElement.innerHTML = formatCurrency(
                 totalProfitCopper < 0 ? -gold : gold,
                 silver,
                 copper
@@ -598,11 +617,18 @@
                                 });
                             }
                             
-                            // Zeige Trading Post Hinweis
+                            // Zeige Trading Post Hinweis mit Copy Button
                             const materialsList = document.createElement('div');
-                            materialsList.className = 'component-materials ms-3 text-warning';
+                            materialsList.className = 'component-materials ms-3';
                             materialsList.style.fontSize = '0.85em';
-                            materialsList.innerHTML = 'Trading Post';
+                            materialsList.innerHTML = `
+                                <div class="d-flex align-items-center">
+                                    <span class="text-warning">Trading Post</span>
+                                    <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${displayName}" style="padding: 0px 4px; font-size: 0.9em;">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            `;
                             compDiv.appendChild(materialsList);
                         } else {
                             // Verarbeite Materialien für zu craftende Komponenten
@@ -631,7 +657,7 @@
                                     }
                                 }).join(', ');
                                 
-                                materialsList.innerHTML = formattedMaterials;
+                                materialsList.textContent = formattedMaterials;
                                 compDiv.appendChild(materialsList);
                             }
                         }
@@ -739,6 +765,22 @@
 
             // Automatisch Ergebnisse berechnen beim Laden der Seite
             calculateResults();
+        });
+
+        // Event Listener für Copy Buttons in den Ergebniskarten
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.copy-btn')) {
+                const button = e.target.closest('.copy-btn');
+                const textToCopy = button.dataset.name;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Visuelles Feedback
+                    const originalHtml = button.innerHTML;
+                    button.innerHTML = '<i class="bi bi-check"></i>';
+                    setTimeout(() => {
+                        button.innerHTML = originalHtml;
+                    }, 1000);
+                });
+            }
         });
     </script>
 </body>
