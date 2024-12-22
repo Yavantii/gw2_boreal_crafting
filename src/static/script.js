@@ -18,673 +18,539 @@ const weaponOrder = [
     "Restored Boreal Staff"        // Artificer - 16
 ];
 
-// Globale Variable für die Ergebnisse
-let currentResults = {};
+// Globale Variablen
+let currentResults = null;
 
-// Am Anfang der Datei nach den Konstanten
-let sellPriceModal;
-
-// Initialisiere das Modal beim Laden der Seite
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialisiere das Modal
-    sellPriceModal = new bootstrap.Modal(document.getElementById('sellPriceModal'));
+// Funktion zum Formatieren der Währung
+function formatCurrency(gold, silver, copper) {
+    // Wenn nur ein Parameter übergeben wurde, behandele ihn als Copper-Wert
+    if (silver === undefined && copper === undefined) {
+        const totalCopper = Math.round(gold);  // gold ist hier eigentlich der copper-Wert
+        gold = Math.floor(totalCopper / 10000);
+        silver = Math.floor((totalCopper % 10000) / 100);
+        copper = totalCopper % 100;
+    }
     
-    // Event Listener für Profession Filter
-    document.querySelectorAll('.profession-filter').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const profession = e.target.value;
-            const isChecked = e.target.checked;
-            
-            // Alle Waffen der entsprechenden Profession selektieren/deselektieren
-            document.querySelectorAll(`.${profession.toLowerCase()}-weapon`).forEach(weaponCheckbox => {
-                weaponCheckbox.checked = isChecked;
+    return `<span class="gold">${gold}G</span> <span class="silver">${silver}S</span> <span class="copper">${copper}C</span>`;
+}
+
+// Funktion zum Anzeigen der Ergebnisse
+function displayResults(results) {
+    if (!results) return;
+    
+    const resultsDiv = document.getElementById('resultsList');
+    if (!resultsDiv) {
+        console.error('resultsList Element nicht gefunden');
+        return;
+    }
+    
+    // Sammle aktive Filter
+    const activeWeapons = Array.from(document.querySelectorAll('.weapon-filter:checked')).map(cb => cb.value);
+    const activeProfessions = Array.from(document.querySelectorAll('.profession-filter:checked')).map(cb => cb.value);
+
+    // Berechne Gesamtkosten und Materialien
+    let materials = {
+        totalOrichalcum: 0,
+        totalAncientWood: 0,
+        totalLeather: 0,
+        totalInscriptions: 0,
+        buyComponents: [] // Array für zu kaufende Komponenten
+    };
+
+    // Filtere und zeige Ergebnisse
+    const resultsContainer = document.createElement('div');
+    resultsContainer.className = 'row g-3';
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(resultsContainer);
+
+    Object.entries(results).forEach(([weaponName, data]) => {
+        // Überspringe den 'materials' Eintrag
+        if (weaponName === 'materials') return;
+
+        if (activeProfessions.includes(data.profession) && activeWeapons.includes(weaponName)) {
+            // Verarbeite die Komponenten und zähle Materialien
+            Object.entries(data.components).forEach(([compName, compData]) => {
+                // Zähle Materialien nur, wenn die Komponente NICHT im TP gekauft wird
+                if (!compData.buyFromTP && compData.materials) {
+                    Object.entries(compData.materials).forEach(([matName, amount]) => {
+                        switch(matName) {
+                            case 'ori_ore':
+                                materials.totalOrichalcum += amount;
+                                break;
+                            case 'ancient_wood':
+                                materials.totalAncientWood += amount;
+                                break;
+                            case 'leather':
+                                materials.totalLeather += amount;
+                                break;
+                        }
+                    });
+                }
+                
+                // Wenn es eine Inscription ist und nicht im TP gekauft wird
+                if (compName === "Berserker's Orichalcum Imbued Inscription" && !compData.buyFromTP) {
+                    materials.totalInscriptions += 1;
+                }
+                
+                // Wenn die Komponente im TP gekauft werden soll
+                if (compData.buyFromTP) {
+                    const displayName = compName === 'inscription' ? "Berserker's Orichalcum Imbued Inscription" : compName;
+                    const existingComp = materials.buyComponents.find(c => c.name === displayName);
+                    if (existingComp) {
+                        existingComp.amount += 1;
+                    } else {
+                        materials.buyComponents.push({
+                            name: displayName,
+                            amount: 1
+                        });
+                    }
+                }
             });
             
-            applyFilters();
-        });
-    });
+            // Erstelle Ergebniskarte im Raster
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'col-md-6 col-lg-4';
+            
+            const card = document.createElement('div');
+            card.className = 'card h-100';
+            
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body p-3';
 
-    // Event Listener für Waffen Filter
-    document.querySelectorAll('.weapon-filter').forEach(checkbox => {
-        checkbox.addEventListener('change', applyFilters);
-    });
+            // Waffentitel und Gesamtkosten
+            cardBody.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0">${weaponName}</h6>
+                    <button type="button" class="btn btn-outline-primary btn-sm calculate-profit" data-weapon="${weaponName}">
+                        Profit
+                    </button>
+                </div>
+                <div class="small mb-2">
+                    <strong>Cost:</strong> 
+                    ${formatCurrency(data.total.gold, data.total.silver, data.total.copper)}
+                    <span class="net-profit ms-2"></span>
+                </div>
+            `;
 
-    // Eingabefeld-Handler
-    const inputs = document.querySelectorAll('input[type="number"]');
-    inputs.forEach(input => {
-        input.addEventListener('blur', () => {
-            if (input.value === '') {
-                input.value = '0';
-            }
-        });
-    });
+            // Komponenten Details
+            const componentsList = document.createElement('div');
+            componentsList.className = 'components-list small';
+            
+            Object.entries(data.components).forEach(([compName, compData]) => {
+                const compDiv = document.createElement('div');
+                compDiv.className = 'component-item mb-1';
+                
+                // Formatiere den Komponentennamen
+                let displayName = compName;
+                if (compName === 'inscription') {
+                    displayName = "Berserker's Orichalcum Imbued Inscription";
+                }
+                
+                // HTML für die Komponente
+                let componentHtml = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="${compData.buyFromTP ? 'text-warning' : ''}">${displayName}:</span>
+                        <div class="text-end">
+                            <span class="${compData.buyFromTP ? 'text-warning' : ''}">${formatCurrency(compData.gold, compData.silver, compData.copper)}</span>
+                        </div>
+                    </div>`;
+                
+                compDiv.innerHTML = componentHtml;
+                
+                // Verarbeite Materialien und zu kaufende Komponenten
+                if (compData.buyFromTP && compName !== 'inscription') {
+                    // Füge zu kaufende Komponente zur Liste hinzu
+                    const existingComp = materials.buyComponents.find(c => c.name === displayName);
+                    if (existingComp) {
+                        existingComp.amount += 1;
+                    } else {
+                        materials.buyComponents.push({
+                            name: displayName,
+                            amount: 1
+                        });
+                    }
+                    
+                    // Zeige Trading Post Hinweis mit Copy Button
+                    const materialsList = document.createElement('div');
+                    materialsList.className = 'component-materials ms-3';
+                    materialsList.style.fontSize = '0.85em';
+                    materialsList.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <span class="text-warning">Trading Post</span>
+                            <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${displayName}" style="padding: 0px 4px; font-size: 0.9em;">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    `;
+                    compDiv.appendChild(materialsList);
+                } else {
+                    // Verarbeite Materialien für zu craftende Komponenten
+                    if (compData.materials) {
+                        const materialsList = document.createElement('div');
+                        materialsList.className = 'component-materials ms-3 text-muted';
+                        materialsList.style.fontSize = '0.85em';
+                        
+                        const formattedMaterials = Object.entries(compData.materials).map(([matName, amount]) => {
+                            // Entferne die Materialzählung hier, da sie bereits vorher gemacht wurde
+                            switch(matName) {
+                                case 'ori_ore':
+                                    return `Orichalcum Ore: ${amount}`;
+                                case 'ancient_wood':
+                                    return `Ancient Wood Log: ${amount}`;
+                                case 'leather':
+                                    return `Hardened Leather Section: ${amount}`;
+                                case 'inscription':
+                                    return `Berserker's Orichalcum Imbued Inscription: ${amount}`;
+                                default:
+                                    return `${matName}: ${amount}`;
+                            }
+                        }).join(', ');
+                        
+                        materialsList.textContent = formattedMaterials;
+                        compDiv.appendChild(materialsList);
+                    }
+                }
+                
+                // Wenn es sich um eine Inscription handelt, zähle sie als benötigtes Material
+                if (compName === 'inscription') {
+                    materials.totalInscriptions += 1;
+                }
 
-    updateShoppingList();
-    updateTotalProfits();
-});
-
-document.getElementById('calculatorForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // Alle Eingabefelder durchgehen und leere Werte mit 0 ersetzen
-    const inputs = e.target.querySelectorAll('input[type="number"]');
-    inputs.forEach(input => {
-        if (input.value === '') {
-            input.value = '0';
+                componentsList.appendChild(compDiv);
+            });
+            
+            cardBody.appendChild(componentsList);
+            card.appendChild(cardBody);
+            cardContainer.appendChild(card);
+            resultsContainer.appendChild(cardContainer);
         }
     });
-    
-    const formData = new FormData(e.target);
-    
+
+    // Aktualisiere die Materialmengen in den Anzeigen NACHDEM alle Berechnungen abgeschlossen sind
+    document.getElementById('totalInscriptions').textContent = materials.totalInscriptions;
+    document.getElementById('totalOrichalcum').textContent = materials.totalOrichalcum;
+    document.getElementById('totalAncientWood').textContent = materials.totalAncientWood;
+    document.getElementById('totalLeather').textContent = materials.totalLeather;
+
+    // Aktualisiere die Shopping-Liste mit den gesammelten Materialien
+    updateShoppingList(materials);
+}
+
+// Event Handler für Calculate Profit Buttons
+document.addEventListener('click', async function(e) {
+    if (e.target.classList.contains('calculate-profit')) {
+        const weaponName = e.target.dataset.weapon;
+        const weaponCard = e.target.closest('.card');
+        const netProfitSpan = weaponCard.querySelector('.net-profit');
+        const profitsList = document.getElementById('profitsList');
+
+        // Wenn der Profit bereits berechnet wurde, entferne ihn
+        if (netProfitSpan.textContent) {
+            netProfitSpan.textContent = '';
+            // Entferne den Eintrag aus der Profitliste
+            const existingItem = Array.from(profitsList.children).find(item => 
+                item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
+            );
+            if (existingItem) {
+                profitsList.removeChild(existingItem);
+                updateTotalProfit();
+            }
+            return;
+        }
+
+        if (!weaponName) {
+            console.error('Missing weapon data');
+            return;
+        }
+        
+        try {
+            // Lade den aktuellen Verkaufspreis vom Trading Post
+            const response = await fetch(`/fetch-weapon-price/${encodeURIComponent(weaponName)}`);
+            if (!response.ok) throw new Error('Failed to fetch weapon price');
+            const sellPrice = await response.json();
+            
+            // Finde die Herstellungskosten für die Waffe
+            const costText = weaponCard.querySelector('.small.mb-2').textContent;
+            const costMatches = costText.match(/Cost:\s+(\d+)G\s+(\d+)S\s+(\d+)C/);
+            if (!costMatches) {
+                console.error('Could not parse craft cost');
+                return;
+            }
+            
+            const craftCost = {
+                gold: parseInt(costMatches[1]) || 0,
+                silver: parseInt(costMatches[2]) || 0,
+                copper: parseInt(costMatches[3]) || 0
+            };
+
+            // Berechne den Profit
+            const profitData = calculateProfit(sellPrice, craftCost);
+
+            // Aktualisiere den Profit in der Ergebniskarte
+            netProfitSpan.className = `net-profit ms-2 ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
+            netProfitSpan.innerHTML = `(Profit: ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)})`;
+
+            // Aktualisiere die Profit-Anzeige
+            const listItem = document.createElement('li');
+            listItem.className = 'd-flex justify-content-between align-items-center mb-2';
+            listItem.innerHTML = `
+                <strong>${weaponName.replace(/_/g, ' ')}:</strong>
+                <span class="${profitData.gold < 0 ? 'text-danger' : 'text-success'}">
+                    ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)}
+                </span>
+            `;
+
+            // Füge neuen Eintrag hinzu
+            profitsList.appendChild(listItem);
+
+            // Aktualisiere Gesamtgewinn
+            updateTotalProfit();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to calculate profit. Please try again.');
+        }
+    }
+});
+
+// Event Listener für den Calculate Button
+document.getElementById('calculateButton').addEventListener('click', async () => {
     try {
         const response = await fetch('/calculate', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
         
-        const results = await response.json();
-        
-        if (response.ok) {
-            currentResults = results;
-            // Wende Filter direkt nach dem Laden der Ergebnisse an
-            applyFilters();
-        } else {
-            console.error('Server Error:', results);
-            alert('Server Fehler: ' + (results.error || 'Unbekannter Fehler'));
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
+        
+        const results = await response.json();
+        console.log('Server response:', results);  // Debug-Ausgabe
+        
+        if (results.error) {
+            console.error('Server Error:', results.error);
+            alert('Server Fehler: ' + results.error);
+            return;
+        }
+        
+        currentResults = results;
+        displayResults(results);
+        
     } catch (error) {
         console.error('Fetch Error:', error);
         alert('Netzwerk Fehler: ' + error.message);
     }
 });
 
-function applyFilters() {
-    if (!currentResults) {
-        console.error('Keine Ergebnisse zum Filtern vorhanden');
-        return;
-    }
-
-    // Hole alle ausgewählten Waffen
-    const selectedWeapons = Array.from(document.querySelectorAll('.weapon-filter:checked'))
-        .map(cb => cb.value);
-    
-    console.log('Selected Weapons:', selectedWeapons);
-    
-    if (selectedWeapons.length === 0) {
-        displayNoFilterWarning();
-        return;
-    }
-    
-    const filteredResults = {};
-    Object.entries(currentResults).forEach(([weaponName, data]) => {
-        if (selectedWeapons.includes(weaponName)) {
-            filteredResults[weaponName] = data;
+// Event Listener für Filter-Änderungen
+document.querySelectorAll('.profession-filter, .weapon-filter').forEach(filter => {
+    filter.addEventListener('change', function() {
+        if (currentResults) {
+            displayResults(currentResults);
         }
     });
-    
-    displayResults(filteredResults);
-    updateShoppingList();
-    updateTotalProfits();
-}
+});
 
-function displayNoFilterWarning() {
-    const resultsDiv = document.getElementById('resultsList');
-    if (!resultsDiv) {
-        console.error('resultsList Element nicht gefunden');
-        return;
+// Event Listener für Profession Filter (Parent Checkboxes)
+document.querySelectorAll('.profession-filter').forEach(professionCheckbox => {
+    professionCheckbox.addEventListener('change', function() {
+        const profession = this.value.toLowerCase();
+        const weaponCheckboxes = document.querySelectorAll(`.${profession}-weapon`);
+        weaponCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+});
+
+// Event Listener für den Refresh Button
+document.getElementById('refreshPrices').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/refresh-prices');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const prices = await response.json();
+        
+        // Aktualisiere die Preisanzeigen
+        for (const [itemName, price] of Object.entries(prices)) {
+            const priceElement = document.querySelector(`[data-item="${itemName}"]`);
+            if (priceElement) {
+                priceElement.innerHTML = `${price.gold}G ${price.silver}S ${price.copper}C`;
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to refresh prices. Please try again.');
     }
-    
-    resultsDiv.innerHTML = `
-        <div class="alert alert-warning" role="alert">
-            <h4 class="alert-heading">Keine Filter ausgewählt!</h4>
-            <p>Bitte wählen Sie mindestens einen Beruf aus, um die Ergebnisse anzuzeigen.</p>
-        </div>
-    `;
-}
+});
 
-function calculateProfit(sellPrice, craftingCost) {
-    const listingFee = Math.floor(sellPrice * 0.05);
-    const exchangeFee = Math.floor(sellPrice * 0.10);
+// Initialisierung beim Laden der Seite
+document.addEventListener('DOMContentLoaded', () => {
+    // Event Listener für Collapse-Funktionalität
+    const sections = [
+        document.querySelector('.shopping-list-section'),
+        document.querySelector('.total-profits-section')
+    ];
+
+    sections.forEach(section => {
+        if (section) {
+            const header = section.querySelector('.card-header');
+            if (header) {
+                header.addEventListener('click', () => {
+                    section.classList.toggle('collapsed');
+                });
+            }
+            section.classList.add('collapsed');
+        }
+    });
+
+    // Automatisch Ergebnisse berechnen beim Laden der Seite
+    document.getElementById('calculateButton').click();
+});
+
+// Funktion zum Berechnen des Profits
+function calculateProfit(sellPrice, craftCost) {
+    const sellCopper = (sellPrice.gold * 10000) + (sellPrice.silver * 100) + sellPrice.copper;
+    const costCopper = (craftCost.gold * 10000) + (craftCost.silver * 100) + craftCost.copper;
+    
+    // Berechne Gebühren
+    const listingFee = Math.ceil(sellCopper * 0.05); // 5% Listing Fee
+    const exchangeFee = Math.ceil(sellCopper * 0.10); // 10% Exchange Fee
     const totalFees = listingFee + exchangeFee;
-    const profit = sellPrice - totalFees - craftingCost;
+    
+    // Berechne Nettogewinn
+    const profitCopper = sellCopper - costCopper - totalFees;
     
     return {
-        profit: profit,
-        listingFee: listingFee,
-        exchangeFee: exchangeFee,
-        totalFees: totalFees,
-        effectiveCost: craftingCost
+        gold: Math.floor(profitCopper / 10000),
+        silver: Math.floor((profitCopper % 10000) / 100),
+        copper: profitCopper % 100,
+        fees: {
+            listingFee: {
+                gold: Math.floor(listingFee / 10000),
+                silver: Math.floor((listingFee % 10000) / 100),
+                copper: listingFee % 100
+            },
+            exchangeFee: {
+                gold: Math.floor(exchangeFee / 10000),
+                silver: Math.floor((exchangeFee % 10000) / 100),
+                copper: exchangeFee % 100
+            }
+        }
     };
 }
 
-function displayResults(results) {
-    console.log('Displaying results:', results);
+// Funktion zum Aktualisieren des Gesamtgewinns
+function updateTotalProfit() {
+    let totalProfitCopper = 0;
     
-    const resultsDiv = document.getElementById('resultsList');
-    if (!resultsDiv) {
-        console.error('resultsList Element nicht gefunden');
-        return;
-    }
-    
-    // Prüfe ob es Ergebnisse gibt
-    if (Object.keys(results).length === 0) {
-        resultsDiv.innerHTML = `
-            <div class="alert alert-info" role="alert">
-                <h4 class="alert-heading">Keine Ergebnisse gefunden</h4>
-                <p>Für die ausgewählten Filter wurden keine Ergebnisse gefunden.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    resultsDiv.innerHTML = '';
-    
-    // Sortiere die Ergebnisse nach der definierten Reihenfolge
-    const sortedResults = Object.entries(results)
-        .sort((a, b) => {
-            const indexA = weaponOrder.indexOf(a[0]);
-            const indexB = weaponOrder.indexOf(b[0]);
-            return indexA - indexB;
-        });
-    
-    sortedResults.forEach(([weaponName, data]) => {
-        const resultItem = document.createElement('div');
-        resultItem.className = 'result-item mb-4 p-3 border rounded';
+    // Sammle alle Profit-Beträge
+    document.querySelectorAll('#profitsList li span').forEach(element => {
+        const goldMatch = element.querySelector('.gold');
+        const silverMatch = element.querySelector('.silver');
+        const copperMatch = element.querySelector('.copper');
         
-        let componentsHtml = '<div class="components-list">';
-        componentsHtml += '<h5>Komponenten:</h5><ul>';
-        
-        // Inscription (ohne Edit-Button)
-        if (data.components && data.components.inscription) {
-            componentsHtml += `
-                <li>
-                    Berserker's Orichalcum Imbued Inscription
-                    <span class="component-cost">${data.components.inscription.gold}g ${data.components.inscription.silver}s ${data.components.inscription.copper}c</span>
-                </li>`;
+        if (goldMatch && silverMatch && copperMatch) {
+            const gold = parseInt(goldMatch.textContent) || 0;
+            const silver = parseInt(silverMatch.textContent) || 0;
+            const copper = parseInt(copperMatch.textContent) || 0;
+            const isNegative = element.classList.contains('text-danger');
+            const profitCopper = (gold * 10000) + (silver * 100) + copper;
+            totalProfitCopper += isNegative ? -profitCopper : profitCopper;
         }
-        
-        // Andere Komponenten mit Edit-Button
-        if (data.components) {
-            Object.entries(data.components).forEach(([componentName, componentData]) => {
-                if (componentName !== 'inscription') {
-                    const componentId = `${weaponName}-${componentName}`.replace(/\s+/g, '-').toLowerCase();
-                    const craftingPrice = `${componentData.gold}g ${componentData.silver}s ${componentData.copper}c`;
-                    const totalCopper = componentData.gold * 10000 + componentData.silver * 100 + componentData.copper;
-                    
-                    componentsHtml += `
-                        <li class="component-item">
-                            <div class="d-flex align-items-center mb-2">
-                                <span>${componentName}</span>
-                                <button type="button" class="btn btn-sm btn-link edit-price-btn ms-2"
-                                        data-component="${componentId}"
-                                        data-bs-toggle="collapse" 
-                                        data-bs-target="#editor-${componentId}">
-                                    <i class="fas fa-edit"></i>
-                                    Edit
+    });
+    
+    // Aktualisiere die Gesamtgewinn-Anzeige
+    const gold = Math.floor(Math.abs(totalProfitCopper) / 10000);
+    const silver = Math.floor((Math.abs(totalProfitCopper) % 10000) / 100);
+    const copper = Math.abs(totalProfitCopper) % 100;
+    const totalProfitElement = document.getElementById('totalProfit');
+    if (totalProfitElement) {
+        totalProfitElement.innerHTML = formatCurrency(
+            totalProfitCopper < 0 ? -gold : gold,
+            silver,
+            copper
+        );
+        totalProfitElement.className = totalProfitCopper < 0 ? 'h4 text-danger' : 'h4 text-success';
+    }
+}
+
+// Funktion zum Aktualisieren der Shopping-Liste
+function updateShoppingList(materials) {
+    const rawMaterialsList = document.getElementById('rawMaterialsList');
+    const inscriptionsList = document.getElementById('inscriptionsList');
+    const componentsList = document.getElementById('componentsList');
+    
+    if (!rawMaterialsList || !inscriptionsList || !componentsList) {
+        console.error('Required elements not found');
+        return;
+    }
+    
+    // Aktualisiere Rohmaterialien
+    rawMaterialsList.innerHTML = `
+        <li class="mb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Orichalcum Ore:</strong> ${materials.totalOrichalcum}
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Orichalcum Ore">
+                    <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
-                            <div class="component-prices">
-                                <span class="crafting-price" id="craft-${componentId}">
-                                    ${craftingPrice}
-                                </span>
-                                <span class="custom-price ms-2" id="custom-price-${componentId}"></span>
-                            </div>
-                            <div class="collapse" id="editor-${componentId}">
-                                <div class="custom-price-editor card card-body mt-2 mb-2">
-                                    <div class="input-group input-group-sm">
-                                        <button class="btn btn-danger btn-sm reset-price-btn" 
-                                                data-component="${componentId}"
-                                                title="Zurück zum Craftingpreis">
-                                            <i class="fas fa-undo"></i>
-                                        </button>
-                                        <input type="number" class="form-control currency-input" placeholder="Gold" 
-                                               id="${componentId}-gold" min="0">
-                                        <span class="input-group-text">G</span>
-                                        <input type="number" class="form-control currency-input" placeholder="Silber" 
-                                               id="${componentId}-silver" min="0" max="99">
-                                        <span class="input-group-text">S</span>
-                                        <input type="number" class="form-control currency-input" placeholder="Kupfer" 
-                                               id="${componentId}-copper" min="0" max="99">
-                                        <span class="input-group-text">C</span>
-                                        <button class="btn btn-success btn-sm confirm-price-btn" 
-                                                data-component="${componentId}"
-                                                data-original-price="${totalCopper}"
-                                                title="Custom-Preis bestätigen">
-                                            <i class="fas fa-check"></i>
+        </li>
+        <li class="mb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Ancient Wood Log:</strong> ${materials.totalAncientWood}
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Ancient Wood Log">
+                    <i class="bi bi-clipboard"></i>
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="component-materials">
-                                ${componentData.materials.ori_ore ? `${componentData.materials.ori_ore}x Orichalcum Ore` : ''}
-                                ${componentData.materials.ancient_wood ? `${componentData.materials.ancient_wood}x Ancient Wood` : ''}
-                                ${componentData.materials.leather ? `${componentData.materials.leather}x Hardened Leather` : ''}
-                            </div>
-                        </li>`;
-                }
-            });
-        }
-        
-        componentsHtml += '</ul></div>';
-        
-        resultItem.innerHTML = `
-            <h4>${weaponName}</h4>
-            <p class="profession-info">Beruf: ${data.profession}</p>
-            <p class="total-cost">Materialkosten: ${data.total.gold}g ${data.total.silver}s ${data.total.copper}c</p>
-            ${componentsHtml}
-            <div class="profit-section mt-3">
-                <button class="btn btn-outline-primary btn-sm calculate-profit-btn" 
-                        data-weapon="${weaponName}"
-                        data-cost="${data.total.gold * 10000 + data.total.silver * 100 + data.total.copper}">
-                    Gewinn berechnen
+        </li>
+        <li class="mb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Hardened Leather Section:</strong> ${materials.totalLeather}
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Hardened Leather Section">
+                    <i class="bi bi-clipboard"></i>
                 </button>
-                <div class="profit-results" id="profit-${weaponName.replace(/\s+/g, '-')}"></div>
             </div>
-        `;
-        
-        resultsDiv.appendChild(resultItem);
-        
-        // Event Listener für die Reset-Buttons
-        document.querySelectorAll('.reset-price-btn').forEach(button => {
-            button.addEventListener('click', handlePriceReset);
-        });
-        
-        // Event Listener für die Bestätigungsbuttons
-        document.querySelectorAll('.confirm-price-btn').forEach(button => {
-            button.addEventListener('click', handleCustomPriceConfirm);
-        });
-    });
-}
-
-// Funktion für das Handling der Custom Price Bestätigung
-function handleCustomPriceConfirm(e) {
-    const componentId = e.target.closest('.confirm-price-btn').dataset.component;
-    const gold = parseInt(document.getElementById(`${componentId}-gold`).value || 0);
-    const silver = parseInt(document.getElementById(`${componentId}-silver`).value || 0);
-    const copper = parseInt(document.getElementById(`${componentId}-copper`).value || 0);
+        </li>
+    `;
     
-    const customPrice = `${gold}g ${silver}s ${copper}c`;
-    const customPriceSpan = document.getElementById(`custom-price-${componentId}`);
-    const craftingPrice = document.getElementById(`craft-${componentId}`);
-    
-    // Setze Custom Price und Style
-    customPriceSpan.textContent = customPrice;
-    customPriceSpan.classList.add('custom-price-active');
-    craftingPrice.classList.add('price-strikethrough');
-    
-    // Schließe den Editor
-    const editor = document.getElementById(`editor-${componentId}`);
-    bootstrap.Collapse.getInstance(editor).hide();
-    
-    // Speichere den Custom Price für spätere Berechnungen
-    e.target.closest('.confirm-price-btn').dataset.customPrice = 
-        (gold * 10000 + silver * 100 + copper).toString();
-
-    // Aktualisiere die Gesamtkosten
-    updateTotalCost(componentId);
-    updateShoppingList();
-    updateTotalProfits();
-}
-
-// Neue Funktion für das Aktualisieren der Gesamtkosten
-function updateTotalCost(changedComponentId) {
-    // Finde die Waffe anhand der Komponenten-ID
-    const weaponElement = document.querySelector(`.result-item:has([data-component="${changedComponentId}"])`);
-    if (!weaponElement) return;
-
-    const totalCostElement = weaponElement.querySelector('.total-cost');
-    if (!totalCostElement) return;
-
-    // Sammle alle Komponenten dieser Waffe
-    let totalCopperCost = 0;
-    
-    // Finde die Inscription
-    const inscriptionElement = weaponElement.querySelector('.component-cost');
-    if (inscriptionElement) {
-        const match = inscriptionElement.textContent.match(/(\d+)g\s+(\d+)s\s+(\d+)c/);
-        if (match) {
-            totalCopperCost += parseInt(match[1]) * 10000 + parseInt(match[2]) * 100 + parseInt(match[3]);
-        }
-    }
-
-    // Finde alle anderen Komponenten dieser spezifischen Waffe
-    const components = weaponElement.querySelectorAll('.component-item');
-    components.forEach(component => {
-        const customPriceSpan = component.querySelector('.custom-price');
-        const craftingPriceSpan = component.querySelector('.crafting-price');
-        const confirmBtn = component.querySelector('.confirm-price-btn');
-        
-        if (customPriceSpan?.classList.contains('custom-price-active') && confirmBtn?.dataset.customPrice) {
-            // Verwende Custom-Preis wenn aktiv
-            totalCopperCost += parseInt(confirmBtn.dataset.customPrice);
-        } else if (craftingPriceSpan) {
-            // Verwende Original-Preis
-            const match = craftingPriceSpan.textContent.match(/(\d+)g\s+(\d+)s\s+(\d+)c/);
-            if (match) {
-                totalCopperCost += parseInt(match[1]) * 10000 + parseInt(match[2]) * 100 + parseInt(match[3]);
-            }
-        }
-    });
-
-    // Konvertiere in Gold/Silber/Copper Format
-    const gold = Math.floor(totalCopperCost / 10000);
-    const silver = Math.floor((totalCopperCost % 10000) / 100);
-    const copper = totalCopperCost % 100;
-
-    // Aktualisiere die Anzeige der Materialkosten
-    totalCostElement.textContent = `Materialkosten: ${gold}g ${silver}s ${copper}c`;
-    
-    // Aktualisiere auch den data-cost Wert des Gewinn-Berechnen-Buttons
-    const profitBtn = weaponElement.querySelector('.calculate-profit-btn');
-    if (profitBtn) {
-        profitBtn.dataset.cost = totalCopperCost.toString();
-        
-        // Prüfe ob bereits eine Gewinnberechnung angezeigt wird
-        const profitDetails = weaponElement.querySelector('.profit-details');
-        if (profitDetails) {
-            // Extrahiere den aktuellen Verkaufspreis
-            const sellPriceText = profitDetails.querySelector('p:first-child').textContent;
-            const sellPriceMatch = sellPriceText.match(/(\d+)g\s+(\d+)s\s+(\d+)c/);
-            
-            if (sellPriceMatch) {
-                const sellPrice = parseInt(sellPriceMatch[1]) * 10000 + 
-                                parseInt(sellPriceMatch[2]) * 100 + 
-                                parseInt(sellPriceMatch[3]);
-                
-                // Berechne den Gewinn neu
-                const profitData = calculateProfit(sellPrice, totalCopperCost);
-                
-                // Formatiere die Preise
-                const formatPrice = (copperValue) => {
-                    const g = Math.floor(copperValue / 10000);
-                    const s = Math.floor((copperValue % 10000) / 100);
-                    const c = copperValue % 100;
-                    return `${g}g ${s}s ${c}c`;
-                };
-                
-                // Aktualisiere die einzelnen Werte in der bestehenden Gewinnberechnung
-                const allElements = profitDetails.children;
-                
-                // Aktualisiere nur die relevanten Werte und behalte die Formatierung bei
-                for (let i = 0; i < allElements.length; i++) {
-                    const element = allElements[i];
-                    if (element.textContent.includes('Listing Fee')) {
-                        element.innerHTML = `<strong>Listing Fee (5%):</strong> ${formatPrice(profitData.listingFee)}`;
-                    } else if (element.textContent.includes('Exchange Fee')) {
-                        element.innerHTML = `<strong>Exchange Fee (10%):</strong> ${formatPrice(profitData.exchangeFee)}`;
-                    } else if (element.textContent.includes('Materialkosten')) {
-                        element.innerHTML = `<strong>Materialkosten:</strong> ${formatPrice(profitData.effectiveCost)}`;
-                    } else if (element.textContent.includes('Gewinn')) {
-                        // Behalte die Profit-Formatierung bei
-                        element.className = `profit-amount ${profitData.profit >= 0 ? 'text-success' : 'text-danger'}`;
-                        element.innerHTML = `<strong>Gewinn:</strong> ${formatPrice(profitData.profit)}`;
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Aktualisiere auch die handlePriceReset Funktion
-function handlePriceReset(e) {
-    const componentId = e.target.closest('.reset-price-btn').dataset.component;
-    const customPriceSpan = document.getElementById(`custom-price-${componentId}`);
-    const craftingPrice = document.getElementById(`craft-${componentId}`);
-    
-    // Entferne Custom Price und Styles
-    customPriceSpan.textContent = '';
-    customPriceSpan.classList.remove('custom-price-active');
-    craftingPrice.classList.remove('price-strikethrough');
-    
-    // Setze Eingabefelder zurück
-    document.getElementById(`${componentId}-gold`).value = '';
-    document.getElementById(`${componentId}-silver`).value = '';
-    document.getElementById(`${componentId}-copper`).value = '';
-    
-    // Entferne gespeicherten Custom Price
-    const confirmBtn = document.querySelector(`.confirm-price-btn[data-component="${componentId}"]`);
-    if (confirmBtn) {
-        confirmBtn.dataset.customPrice = '';
-    }
-    
-    // Schließe den Editor
-    const editor = document.getElementById(`editor-${componentId}`);
-    bootstrap.Collapse.getInstance(editor).hide();
-    
-    // Aktualisiere die Gesamtkosten
-    updateTotalCost(componentId);
-    updateShoppingList();
-    updateTotalProfits();
-}
-
-// Event-Listener für die Profit-Buttons
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('calculate-profit-btn')) {
-        const weaponName = e.target.dataset.weapon;
-        const craftingCost = parseInt(e.target.dataset.cost);
-        
-        // Setze den Weapon-Namen im Modal
-        document.getElementById('currentWeaponName').value = weaponName;
-        document.getElementById('sellPriceModalLabel').textContent = `Verkaufspreis für ${weaponName}`;
-        
-        // Reset previous values
-        document.getElementById('sell_price_gold').value = '';
-        document.getElementById('sell_price_silver').value = '';
-        document.getElementById('sell_price_copper').value = '';
-        
-        // Zeige das Modal
-        sellPriceModal.show();
-        
-        // Event-Listener für den Berechnen-Button im Modal
-        const calculateProfitBtn = document.getElementById('calculateProfitBtn');
-        calculateProfitBtn.onclick = () => {
-            const gold = parseInt(document.getElementById('sell_price_gold').value || 0);
-            const silver = parseInt(document.getElementById('sell_price_silver').value || 0);
-            const copper = parseInt(document.getElementById('sell_price_copper').value || 0);
-            
-            const sellPrice = gold * 10000 + silver * 100 + copper;
-            const profitData = calculateProfit(sellPrice, craftingCost);
-            
-            // Konvertiere die Copper-Werte in Gold/Silber/Copper
-            const formatPrice = (copperValue) => {
-                const gold = Math.floor(copperValue / 10000);
-                const silver = Math.floor((copperValue % 10000) / 100);
-                const copper = copperValue % 100;
-                return `${gold}g ${silver}s ${copper}c`;
-            };
-            
-            // Zeige die Gewinnberechnung an
-            const profitResultsDiv = document.getElementById(`profit-${weaponName.replace(/\s+/g, '-')}`);
-            profitResultsDiv.innerHTML = `
-                <div class="profit-details mt-2">
-                    <p><strong>Verkaufspreis:</strong> ${formatPrice(sellPrice)}</p>
-                    <p><strong>Listing Fee (5%):</strong> ${formatPrice(profitData.listingFee)}</p>
-                    <p><strong>Exchange Fee (10%):</strong> ${formatPrice(profitData.exchangeFee)}</p>
-                    <p><strong>Materialkosten:</strong> ${formatPrice(profitData.effectiveCost)}</p>
-                    <p class="profit-amount ${profitData.profit >= 0 ? 'text-success' : 'text-danger'}">
-                        <strong>Gewinn:</strong> ${formatPrice(profitData.profit)}
-                    </p>
+    // Aktualisiere Inscriptions
+    inscriptionsList.innerHTML = `
+        <li class="mb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Berserker's Orichalcum Imbued Inscription:</strong> ${materials.totalInscriptions}
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Berserker's Orichalcum Imbued Inscription">
+                    <i class="bi bi-clipboard"></i>
+                </button>
                 </div>
-            `;
-            
-            sellPriceModal.hide();
-            updateShoppingList();
-            updateTotalProfits();
-        };
-    }
-});
-
-function updateShoppingList() {
-    // Prüfe ob die erforderlichen Elemente existieren
-    const componentsList = document.getElementById('componentsList');
-    const totalCostElement = document.getElementById('totalCost');
+        </li>
+    `;
     
-    if (!componentsList || !totalCostElement) {
-        console.warn('Shopping List elements not found');
-        return;
-    }
+    // Aktualisiere zu kaufende Komponenten
+    componentsList.innerHTML = materials.buyComponents.map(comp => `
+        <li class="mb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <strong>${comp.name}:</strong> ${comp.amount}
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${comp.name}">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>
+        </li>
+    `).join('');
 
-    let totalOrichalcum = 0;
-    let totalAncientWood = 0;
-    let totalLeather = 0;
-    let totalInscriptions = 0;
-    let totalCostInCopper = 0;
-    let componentsToBy = new Map();
-
-    // Finde alle sichtbaren Waffen-Ergebnisse
-    const visibleWeapons = document.querySelectorAll('.result-item:not(.d-none)');
-    
-    visibleWeapons.forEach(weapon => {
-        // Sammle Materialien aus allen Komponenten
-        const components = weapon.querySelectorAll('.component-item');
-        components.forEach(component => {
-            const componentName = component.querySelector('span').textContent.trim();
-            const customPriceSpan = component.querySelector('.custom-price.custom-price-active');
-            
-            if (customPriceSpan) {
-                // Diese Komponente wird gekauft
-                const priceMatch = customPriceSpan.textContent.match(/(\d+)g\s+(\d+)s\s+(\d+)c/);
-                if (priceMatch) {
-                    const componentPrice = parseInt(priceMatch[1]) * 10000 + 
-                                        parseInt(priceMatch[2]) * 100 + 
-                                        parseInt(priceMatch[3]);
-                    totalCostInCopper += componentPrice;
-                    
-                    // Füge zur Liste der zu kaufenden Komponenten hinzu
-                    if (componentsToBy.has(componentName)) {
-                        componentsToBy.set(componentName, {
-                            count: componentsToBy.get(componentName).count + 1,
-                            pricePerUnit: componentPrice
-                        });
-                    } else {
-                        componentsToBy.set(componentName, {
-                            count: 1,
-                            pricePerUnit: componentPrice
-                        });
-                    }
-                }
-            } else {
-                // Diese Komponente wird gecraftet, zähle Rohmaterialien
-                const materialsText = component.querySelector('.component-materials').textContent;
-                
-                const oriMatch = materialsText.match(/(\d+)x Orichalcum Ore/);
-                if (oriMatch) totalOrichalcum += parseInt(oriMatch[1]);
-                
-                const woodMatch = materialsText.match(/(\d+)x Ancient Wood/);
-                if (woodMatch) totalAncientWood += parseInt(woodMatch[1]);
-                
-                const leatherMatch = materialsText.match(/(\d+)x Hardened Leather/);
-                if (leatherMatch) totalLeather += parseInt(leatherMatch[1]);
-                
-                // Addiere Craftingkosten
-                const craftingPriceSpan = component.querySelector('.crafting-price');
-                if (craftingPriceSpan) {
-                    const priceMatch = craftingPriceSpan.textContent.match(/(\d+)g\s+(\d+)s\s+(\d+)c/);
-                    if (priceMatch) {
-                        totalCostInCopper += parseInt(priceMatch[1]) * 10000 + 
-                                           parseInt(priceMatch[2]) * 100 + 
-                                           parseInt(priceMatch[3]);
-                    }
-                }
-            }
+// Event Listener für Copy Buttons
+    document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const textToCopy = this.dataset.name;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+                // Optional: Visuelles Feedback
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                    this.innerHTML = originalText;
+            }, 1000);
+            });
         });
-        
-        // Zähle Inscriptions
-        const inscription = weapon.querySelector('.component-cost');
-        if (inscription) {
-            totalInscriptions++;
-            const priceMatch = inscription.textContent.match(/(\d+)g\s+(\d+)s\s+(\d+)c/);
-            if (priceMatch) {
-                totalCostInCopper += parseInt(priceMatch[1]) * 10000 + 
-                                   parseInt(priceMatch[2]) * 100 + 
-                                   parseInt(priceMatch[3]);
-            }
-        }
     });
-
-    // Aktualisiere die Anzeige der Rohmaterialien
-    document.getElementById('totalOrichalcum').textContent = totalOrichalcum;
-    document.getElementById('totalAncientWood').textContent = totalAncientWood;
-    document.getElementById('totalLeather').textContent = totalLeather;
-    document.getElementById('totalInscriptions').textContent = totalInscriptions;
-    
-    // Aktualisiere die Liste der zu kaufenden Komponenten
-    componentsList.innerHTML = ''; // Liste leeren
-    
-    componentsToBy.forEach((data, componentName) => {
-        const li = document.createElement('li');
-        li.className = 'mb-2';
-        const gold = Math.floor(data.pricePerUnit / 10000);
-        const silver = Math.floor((data.pricePerUnit % 10000) / 100);
-        const copper = data.pricePerUnit % 100;
-        li.innerHTML = `
-            <strong>${componentName}:</strong> ${data.count}x 
-            <span class="text-muted">(${gold}g ${silver}s ${copper}c pro Stück)</span>
-        `;
-        componentsList.appendChild(li);
-    });
-    
-    // Formatiere und zeige Gesamtkosten
-    const gold = Math.floor(totalCostInCopper / 10000);
-    const silver = Math.floor((totalCostInCopper % 10000) / 100);
-    const copper = totalCostInCopper % 100;
-    totalCostElement.textContent = `${gold}g ${silver}s ${copper}c`;
-}
-
-// Stelle sicher, dass updateShoppingList erst nach dem DOM-Load ausgeführt wird
-document.addEventListener('DOMContentLoaded', () => {
-    updateShoppingList();
-});
-
-function updateTotalProfits() {
-    let totalProfitInCopper = 0;
-    const profitsList = document.getElementById('profitsList');
-    profitsList.innerHTML = ''; // Liste leeren
-
-    // Finde alle sichtbaren Waffen mit Gewinnberechnung
-    const visibleWeapons = document.querySelectorAll('.result-item:not(.d-none)');
-    
-    visibleWeapons.forEach(weapon => {
-        const profitElement = weapon.querySelector('.profit-amount');
-        if (profitElement) {
-            const weaponName = weapon.querySelector('h4').textContent;
-            const profitText = profitElement.textContent;
-            const match = profitText.match(/(-?\d+)g\s+(-?\d+)s\s+(-?\d+)c/);
-            
-            if (match) {
-                const profitInCopper = (parseInt(match[1]) * 10000 + 
-                                      parseInt(match[2]) * 100 + 
-                                      parseInt(match[3])) * 
-                                      (profitText.includes('-') ? -1 : 1);
-                
-                totalProfitInCopper += profitInCopper;
-                
-                // Füge Eintrag zur Liste hinzu
-                const li = document.createElement('li');
-                li.className = 'mb-2';
-                li.innerHTML = `
-                    <strong>${weaponName}:</strong> 
-                    <span class="${profitInCopper >= 0 ? 'text-success' : 'text-danger'}">
-                        ${formatPrice(profitInCopper)}
-                    </span>
-                `;
-                profitsList.appendChild(li);
-            }
-        }
-    });
-    
-    // Aktualisiere Gesamtgewinn
-    const totalProfitElement = document.getElementById('totalProfit');
-    totalProfitElement.className = `h4 ${totalProfitInCopper >= 0 ? 'text-success' : 'text-danger'}`;
-    totalProfitElement.textContent = formatPrice(totalProfitInCopper);
-}
-
-// Hilfsfunktion zum Formatieren der Preise
-function formatPrice(copperValue) {
-    const negative = copperValue < 0;
-    copperValue = Math.abs(copperValue);
-    const gold = Math.floor(copperValue / 10000);
-    const silver = Math.floor((copperValue % 10000) / 100);
-    const copper = copperValue % 100;
-    return `${negative ? '-' : ''}${gold}g ${silver}s ${copper}c`;
 }
