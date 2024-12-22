@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, request
 import sqlite3
 from datetime import datetime, timedelta
 from market_research import TRACKED_ITEMS, format_price, init_db
@@ -287,3 +287,147 @@ def service_status():
         })
     finally:
         conn.close() 
+
+@market_bp.route('/api/market/chat', methods=['POST'])
+def market_chat():
+    try:
+        user_message = request.json.get('message')
+        
+        # Hole relevante Marktdaten aus der Datenbank
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Hole die neuesten Snapshots
+        c.execute('''
+            WITH LatestSnapshots AS (
+                SELECT item_id, MAX(timestamp) as max_timestamp
+                FROM market_snapshots
+                GROUP BY item_id
+            )
+            SELECT m.*, i.date, i.avg_price, i.min_price, i.max_price, i.sales_estimate
+            FROM market_snapshots m
+            JOIN LatestSnapshots l ON m.item_id = l.item_id AND m.timestamp = l.max_timestamp
+            LEFT JOIN daily_stats i ON m.item_id = i.item_id AND date(m.timestamp) = i.date
+        ''')
+        
+        market_data = {}
+        for row in c.fetchall():
+            item_id = row['item_id']
+            item_name = TRACKED_ITEMS.get(item_id, 'Unbekannt')
+            market_data[item_name] = {
+                'current_price': row['lowest_sell'],
+                'total_listings': row['total_sell_listings'],
+                'avg_price': row['avg_price'],
+                'min_price': row['min_price'],
+                'max_price': row['max_price'],
+                'sales_estimate': row['sales_estimate'],
+                'positions': json.loads(row['sell_listing_positions'])
+            }
+        
+        # Analysiere die Daten und erstelle eine Antwort
+        response = analyze_market_data(user_message, market_data)
+        
+        return jsonify({
+            'response': response,
+            'market_data': market_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': f'Fehler bei der Verarbeitung: {str(e)}'
+        }), 500
+    finally:
+        conn.close()
+
+def analyze_market_data(user_message, market_data):
+    """Analysiert die Marktdaten basierend auf der Benutzeranfrage."""
+    
+    if not market_data:
+        return "Entschuldigung, aber ich habe noch keine Marktdaten zur Analyse. Der Market Research Service sammelt gerade die ersten Daten."
+    
+    response = "Basierend auf den aktuellen Marktdaten:\n\n"
+    
+    # Finde die profitabelsten Items
+    profitable_items = []
+    for item_name, data in market_data.items():
+        if data['avg_price'] and data['current_price'] and data['avg_price'] > 0:
+            profit_margin = (data['current_price'] - data['avg_price']) / data['avg_price'] * 100
+            profitable_items.append((item_name, profit_margin, data))
+    
+    if not profitable_items:
+        response = "Aktuelle Marktübersicht:\n\n"
+        for item_name, data in market_data.items():
+            response += f"- {item_name}:\n"
+            response += f"  Aktueller Preis: {format_price(data['current_price'])}\n"
+            response += f"  Aktive Angebote: {data['total_listings']} Stück\n"
+            
+            # Füge Positionsdaten hinzu, wenn verfügbar
+            if data['positions'].get('price_points'):
+                price_points = data['positions']['price_points']
+                if price_points:
+                    response += f"  Top 3 Preispunkte:\n"
+                    for point in price_points[:3]:
+                        response += f"    Position {point['position']}: {format_price(point['price'])} ({point['quantity']} Stück)\n"
+            response += "\n"
+        
+        return response
+    
+    # Sortiere nach Gewinnmarge
+    profitable_items.sort(key=lambda x: x[1], reverse=True)
+    
+    # Füge Empfehlungen hinzu
+    response += "Top 3 profitable Items:\n"
+    for item_name, margin, data in profitable_items[:3]:
+        response += f"- {item_name}:\n"
+        response += f"  Gewinnmarge: {margin:.1f}%\n"
+        response += f"  Aktueller Preis: {format_price(data['current_price'])}\n"
+        response += f"  Durchschnittspreis: {format_price(data['avg_price'])}\n"
+        response += f"  Aktive Angebote: {data['total_listings']} Stück\n"
+        if data['sales_estimate'] is not None:
+            response += f"  Verkaufsschätzung: {data['sales_estimate']} pro Tag\n"
+        response += "\n"
+    
+    # Füge allgemeine Marktanalyse hinzu
+    total_listings = sum(data['total_listings'] for data in market_data.values())
+    response += f"Allgemeine Marktanalyse:\n"
+    response += f"- Gesamtangebote im Markt: {total_listings} Stück\n"
+    
+    if profitable_items:
+        avg_margin = sum(margin for _, margin, _ in profitable_items) / len(profitable_items)
+        response += f"- Durchschnittliche Gewinnmarge: {avg_margin:.1f}%\n"
+    
+    # Füge Handelsempfehlungen hinzu
+    response += "\nHandelsempfehlungen:\n"
+    
+    # Finde Items mit wenigen Angeboten
+    low_supply = sorted(market_data.items(), key=lambda x: x[1]['total_listings'])[:3]
+    response += "Items mit geringem Angebot (Verkaufschance):\n"
+    for item_name, data in low_supply:
+        response += f"- {item_name}: {data['total_listings']} Angebote\n"
+    
+    return response 
+
+@market_bp.route('/api/market/restart-service', methods=['POST'])
+def restart_service():
+    try:
+        import subprocess
+        import sys
+        import os
+
+        # Starte den Market Research Service als Hintergrundprozess
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'market_research.py')
+        subprocess.Popen([sys.executable, script_path], 
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        creationflags=subprocess.CREATE_NO_WINDOW)
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Market Research Service wurde neu gestartet'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Fehler beim Neustarten des Services: {str(e)}'
+        }), 500

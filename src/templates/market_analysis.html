@@ -82,11 +82,14 @@
                     </ul>
                     <!-- Service Status -->
                     <div class="ms-auto d-flex align-items-center">
-                        <div id="serviceStatus" class="text-white">
+                        <div id="serviceStatus" class="text-white me-3">
                             <span class="status-dot"></span>
                             <span class="status-text">Prüfe Service-Status...</span>
                             <small class="status-time d-block text-end"></small>
                         </div>
+                        <button id="restartService" class="btn btn-sm btn-outline-light" onclick="restartService()" style="display: none;">
+                            <i class="bi bi-arrow-clockwise"></i> Service neustarten
+                        </button>
                     </div>
                 </div>
             </div>
@@ -207,6 +210,29 @@
                         <ul class="list-unstyled" id="relistRecommendations">
                             <!-- Wird durch JavaScript gefüllt -->
                         </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Füge den Chat-Bereich hinzu -->
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card bg-dark text-light">
+                        <div class="card-header">
+                            <h5 class="mb-0">Markt-Assistent</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="chatMessages" class="mb-3" style="height: 300px; overflow-y: auto;">
+                                <!-- Hier werden die Chat-Nachrichten angezeigt -->
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="userMessage" class="form-control bg-dark text-light" 
+                                       placeholder="Fragen Sie nach Marktanalysen und Strategien...">
+                                <button class="btn btn-primary" onclick="sendMessage()">Senden</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -645,13 +671,18 @@
             }
         }
 
-        // Funktion zum Prüfen des Service-Status
+        let recoveryAttempts = 0;
+        const MAX_RECOVERY_ATTEMPTS = 3;
+        const RECOVERY_RESET_TIME = 30 * 60 * 1000; // 30 Minuten
+        let lastRecoveryTime = null;
+
         async function checkServiceStatus() {
             try {
                 const response = await fetch('/api/market/service-status');
                 const data = await response.json();
                 
                 const statusDiv = document.getElementById('serviceStatus');
+                const restartButton = document.getElementById('restartService');
                 statusDiv.className = `status-${data.status}`;
                 
                 const statusText = statusDiv.querySelector('.status-text');
@@ -663,11 +694,76 @@
                     statusTime.textContent = `Letzte Aktualisierung: ${lastUpdate.toLocaleTimeString('de-DE')}`;
                 }
                 
+                // Auto-Recovery Logik
+                if (data.status === 'inactive') {
+                    const currentTime = new Date().getTime();
+                    
+                    // Reset Recovery-Versuche nach RECOVERY_RESET_TIME
+                    if (lastRecoveryTime && (currentTime - lastRecoveryTime) > RECOVERY_RESET_TIME) {
+                        recoveryAttempts = 0;
+                    }
+                    
+                    if (recoveryAttempts < MAX_RECOVERY_ATTEMPTS) {
+                        console.log(`Automatischer Neustart-Versuch ${recoveryAttempts + 1}/${MAX_RECOVERY_ATTEMPTS}`);
+                        await restartService(true);
+                        recoveryAttempts++;
+                        lastRecoveryTime = currentTime;
+                    } else {
+                        console.log('Maximale Anzahl an Neustartversuchen erreicht');
+                        statusText.textContent += ' (Automatische Neustarts erschöpft)';
+                        restartButton.style.display = 'block'; // Zeige manuellen Restart-Button
+                    }
+                } else if (data.status === 'active') {
+                    recoveryAttempts = 0; // Reset bei erfolgreichem Status
+                    restartButton.style.display = 'none';
+                }
+                
             } catch (error) {
                 console.error('Fehler beim Prüfen des Service-Status:', error);
                 const statusDiv = document.getElementById('serviceStatus');
                 statusDiv.className = 'status-error';
                 statusDiv.querySelector('.status-text').textContent = 'Fehler beim Prüfen des Status';
+                document.getElementById('restartService').style.display = 'block';
+            }
+        }
+
+        async function restartService(isAutoRestart = false) {
+            try {
+                const button = document.getElementById('restartService');
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Starte neu...';
+                
+                const response = await fetch('/api/market/restart-service', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (!isAutoRestart) {
+                        // Bei manuellem Neustart: Reset der Recovery-Versuche
+                        recoveryAttempts = 0;
+                        lastRecoveryTime = new Date().getTime();
+                    }
+                    
+                    // Warte 5 Sekunden und prüfe dann den Status erneut
+                    setTimeout(() => {
+                        checkServiceStatus();
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Service neustarten';
+                    }, 5000);
+                } else {
+                    throw new Error(data.message);
+                }
+                
+            } catch (error) {
+                console.error('Fehler beim Neustarten des Services:', error);
+                const button = document.getElementById('restartService');
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Service neustarten';
+                if (!isAutoRestart) {
+                    alert('Fehler beim Neustarten des Services: ' + error.message);
+                }
             }
         }
 
@@ -675,6 +771,65 @@
         setInterval(checkServiceStatus, 30000);
         // Initiale Prüfung
         checkServiceStatus();
+
+        function addMessage(message, isUser = false) {
+            const chatDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-2 ${isUser ? 'text-end' : ''}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `d-inline-block p-2 rounded ${isUser ? 'bg-primary' : 'bg-secondary'}`;
+            contentDiv.style.maxWidth = '80%';
+            contentDiv.innerText = message;
+            
+            messageDiv.appendChild(contentDiv);
+            chatDiv.appendChild(messageDiv);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userMessage');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Zeige Benutzernachricht
+            addMessage(message, true);
+            input.value = '';
+            
+            try {
+                // Sende Anfrage an den Server
+                const response = await fetch('/api/market/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('Entschuldigung, es ist ein Fehler aufgetreten: ' + data.error);
+                } else {
+                    // Zeige die KI-Antwort
+                    addMessage(data.response);
+                }
+            } catch (error) {
+                addMessage('Entschuldigung, es ist ein Fehler bei der Kommunikation aufgetreten.');
+                console.error('Chat error:', error);
+            }
+        }
+
+        // Event-Listener für Enter-Taste
+        document.getElementById('userMessage').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initiale Begrüßungsnachricht
+        addMessage('Hallo! Ich bin Ihr Markt-Assistent. Ich kann Ihnen helfen, die aktuellen Marktdaten zu analysieren und Handelsstrategien zu entwickeln. Wie kann ich Ihnen helfen?');
     </script>
 </body>
 </html> 
