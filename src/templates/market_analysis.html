@@ -8,6 +8,27 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .currency-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            margin: 0 2px;
+        }
+        .item-icon {
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        #activeListingsTable td {
+            vertical-align: middle;
+        }
+        .table-success {
+            background-color: rgba(25, 135, 84, 0.1);
+        }
+        .table-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
@@ -33,6 +54,31 @@
 
         <!-- Marktübersicht -->
         <div class="row mb-4">
+            <!-- Neue Karte für aktive Verkäufe -->
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Meine aktiven Verkäufe</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="activeListingsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Waffe</th>
+                                        <th>Eingestellt seit</th>
+                                        <th>Verkaufspreis</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Wird durch JavaScript gefüllt -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-primary text-white">
@@ -124,33 +170,289 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Beispiel für Chart-Initialisierung
-        function initCharts() {
-            // Aktuelle Marktpreise Chart
-            new Chart(document.getElementById('currentPricesChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Waffe 1', 'Waffe 2', 'Waffe 3'],
-                    datasets: [{
-                        label: 'Aktueller Preis',
-                        data: [100, 200, 300],
-                        backgroundColor: 'rgba(74, 158, 255, 0.7)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+        const API_KEY = '53E1B734-BE78-6D4B-BFC4-AB5A7BD0CE8E8CE228E8-69FC-4E92-9CAE-AD4C68D3AB44';
+        
+        // Funktion zum Formatieren der Zeit
+        function formatTimeDifference(timestamp) {
+            const now = new Date();
+            const listingDate = new Date(timestamp);
+            const diffHours = Math.floor((now - listingDate) / (1000 * 60 * 60));
+            
+            if (diffHours < 24) {
+                return `${diffHours} Stunden`;
+            }
+            return `${Math.floor(diffHours / 24)} Tage`;
+        }
 
-            // Weitere Charts hier...
+        // Funktion zum Formatieren von Preisen
+        function formatGoldPrice(copper) {
+            const gold = Math.floor(copper / 10000);
+            const silver = Math.floor((copper % 10000) / 100);
+            const copperRest = copper % 100;
+            
+            return `${gold} <img src="{{ url_for('static', filename='gold.png') }}" alt="Gold" class="currency-icon"> 
+                    ${silver} <img src="{{ url_for('static', filename='silver.png') }}" alt="Silver" class="currency-icon"> 
+                    ${copperRest} <img src="{{ url_for('static', filename='copper.png') }}" alt="Copper" class="currency-icon">`;
+        }
+
+        // Funktion zum Laden der Item-Details
+        async function getItemDetails(itemId) {
+            try {
+                const response = await fetch(`https://api.guildwars2.com/v2/items/${itemId}`);
+                const item = await response.json();
+                return item;
+            } catch (error) {
+                console.error('Fehler beim Laden der Item-Details:', error);
+                return null;
+            }
+        }
+
+        // Funktion zum Bestimmen des Status einer Verkaufsposition
+        function getListingStatus(hours) {
+            if (hours < 48) {
+                return {
+                    text: 'Aktiv',
+                    class: 'bg-success text-white'
+                };
+            }
+            return {
+                text: 'Neu einstellen empfohlen',
+                class: 'bg-warning text-dark'
+            };
+        }
+
+        // Funktion zum Laden der aktiven Verkäufe
+        async function loadActiveListings() {
+            try {
+                const response = await fetch(`https://api.guildwars2.com/v2/commerce/transactions/current/sells?access_token=${API_KEY}`);
+                const listings = await response.json();
+                
+                const tbody = document.querySelector('#activeListingsTable tbody');
+                tbody.innerHTML = '';
+
+                // Sortiere Listings nach Erstellungsdatum (neueste zuerst)
+                listings.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+                // Speichere aktive Boreal-Verkäufe für Calculator
+                const activeBorealSales = [];
+
+                for (const listing of listings) {
+                    // Hole Item-Details
+                    const itemDetails = await getItemDetails(listing.item_id);
+                    
+                    // Prüfe ob es eine Boreal-Waffe ist
+                    if (itemDetails && itemDetails.name.includes('Boreal')) {
+                        // Füge zu aktiven Verkäufen hinzu
+                        activeBorealSales.push({
+                            id: listing.item_id,
+                            name: itemDetails.name,
+                            created: listing.created,
+                            price: listing.price,
+                            hoursActive: Math.floor((new Date() - new Date(listing.created)) / (1000 * 60 * 60))
+                        });
+
+                        const timeSinceListing = new Date() - new Date(listing.created);
+                        const hoursActive = Math.floor(timeSinceListing / (1000 * 60 * 60));
+                        const status = getListingStatus(hoursActive);
+
+                        const row = document.createElement('tr');
+                        // Füge Klasse basierend auf Status hinzu
+                        row.className = status.class.replace('bg-', 'table-');
+                        
+                        row.innerHTML = `
+                            <td>
+                                <img src="${itemDetails.icon}" alt="${itemDetails.name}" class="item-icon" style="width: 32px; height: 32px; margin-right: 8px;">
+                                ${itemDetails.name}
+                            </td>
+                            <td>${formatTimeDifference(listing.created)}</td>
+                            <td>${formatGoldPrice(listing.price)}</td>
+                            <td>
+                                <span class="badge ${status.class}">${status.text}</span>
+                                ${hoursActive >= 48 ? 
+                                    '<br><small class="text-muted">Neu einstellen kostet: ' + 
+                                    formatGoldPrice(Math.ceil(listing.price * 0.05)) + '</small>' : 
+                                    ''}
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                }
+
+                // Speichere aktive Verkäufe im localStorage
+                localStorage.setItem('activeBorealSales', JSON.stringify(activeBorealSales));
+
+                // Sende Event an Calculator, falls geöffnet
+                window.dispatchEvent(new CustomEvent('activeSalesUpdated', {
+                    detail: activeBorealSales
+                }));
+
+                // Wenn keine Einträge gefunden wurden
+                if (tbody.children.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                Keine aktiven Boreal-Waffen im Handelsposten
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Fehler beim Laden der aktiven Verkäufe:', error);
+                document.querySelector('#activeListingsTable tbody').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            Fehler beim Laden der Verkaufsdaten
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Funktion zum Laden der Marktpreise und Verkaufsvolumen
+        async function loadMarketData() {
+            try {
+                // Liste aller Boreal-Waffen IDs
+                const borealWeaponIds = [
+                    92222, // Pistol
+                    92298, // Short Bow
+                    92354, // Longbow
+                    92367, // Focus
+                    92343, // Staff
+                    92290, // Warhorn
+                    92248, // Sword
+                    92321, // Shield
+                    92334, // Torch
+                    92276, // Mace
+                    92309  // Axe
+                ];
+
+                // Hole Marktdaten für alle Waffen
+                const response = await fetch(`https://api.guildwars2.com/v2/commerce/prices?ids=${borealWeaponIds.join(',')}`);
+                const pricesData = await response.json();
+
+                // Sortiere nach höchstem Verkaufspreis
+                pricesData.sort((a, b) => b.sells.unit_price - a.sells.unit_price);
+
+                // Hole Item-Details für die Namen
+                const itemDetails = await Promise.all(
+                    pricesData.map(item => getItemDetails(item.id))
+                );
+
+                // Aktualisiere Marktpreis-Chart
+                const priceChart = new Chart(document.getElementById('currentPricesChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: itemDetails.map(item => item.name.replace('Restored Boreal ', '')),
+                        datasets: [{
+                            label: 'Verkaufspreis',
+                            data: pricesData.map(item => item.sells.unit_price / 10000),
+                            backgroundColor: 'rgba(74, 158, 255, 0.7)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.raw.toFixed(2) + ' Gold';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Preis in Gold'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Aktualisiere Verkaufsvolumen-Chart
+                const volumeChart = new Chart(document.getElementById('volumeChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: itemDetails.map(item => item.name.replace('Restored Boreal ', '')),
+                        datasets: [{
+                            label: 'Verkaufsvolumen',
+                            data: pricesData.map(item => item.sells.quantity),
+                            backgroundColor: 'rgba(255, 159, 64, 0.7)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Anzahl Angebote'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Aktualisiere Empfehlungen
+                updateRecommendations(pricesData, itemDetails);
+
+            } catch (error) {
+                console.error('Fehler beim Laden der Marktdaten:', error);
+            }
+        }
+
+        // Funktion zum Aktualisieren der Empfehlungen
+        function updateRecommendations(pricesData, itemDetails) {
+            const sellRecommendations = document.getElementById('sellRecommendations');
+            const relistRecommendations = document.getElementById('relistRecommendations');
+
+            // Kombiniere Preis- und Item-Daten
+            const combinedData = pricesData.map((price, index) => ({
+                name: itemDetails[index].name,
+                price: price.sells.unit_price,
+                quantity: price.sells.quantity,
+                id: price.id
+            }));
+
+            // Sortiere nach bestem Preis/Angebot-Verhältnis
+            const sortedByOpportunity = [...combinedData].sort((a, b) => 
+                (b.price / b.quantity) - (a.price / a.quantity)
+            );
+
+            // Zeige Top 3 Verkaufschancen
+            sellRecommendations.innerHTML = sortedByOpportunity.slice(0, 3)
+                .map(item => `
+                    <li class="mb-2">
+                        <strong>${item.name.replace('Restored Boreal ', '')}</strong><br>
+                        <small>Preis: ${formatGoldPrice(item.price)}<br>
+                        Angebote: ${item.quantity}</small>
+                    </li>
+                `).join('');
         }
 
         // Lade Daten beim Start
         document.addEventListener('DOMContentLoaded', function() {
-            initCharts();
+            loadActiveListings();  // Initiales Laden der aktiven Verkäufe
+            loadMarketData();      // Initiales Laden der Marktdaten
             
-            // Event Listener für Item-Auswahl
+            // Aktualisiere alle 5 Minuten
+            setInterval(loadActiveListings, 5 * 60 * 1000);
+            setInterval(loadMarketData, 5 * 60 * 1000);
+            
             document.getElementById('itemSelect').addEventListener('change', function() {
                 updateItemDetails(this.value);
             });

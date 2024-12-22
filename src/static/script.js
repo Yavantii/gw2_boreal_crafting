@@ -119,7 +119,7 @@ function displayResults(results) {
         cardContainer.className = 'col-md-6 col-lg-4';
         
         const card = document.createElement('div');
-        card.className = 'card h-100';
+        card.className = 'card h-100 result-card';
         
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body p-3';
@@ -127,7 +127,7 @@ function displayResults(results) {
         // Waffentitel und Gesamtkosten
         cardBody.innerHTML = `
             <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="card-title mb-0">${weaponName}</h6>
+                <h6 class="card-title mb-0 weapon-name">${weaponName}</h6>
                 <button type="button" class="btn btn-sm btn-outline-primary calculate-profit" data-weapon="${weaponName}">
                     Profit
                 </button>
@@ -240,6 +240,9 @@ function displayResults(results) {
 
     // Aktualisiere die Shopping-Liste mit den gesammelten Materialien
     updateShoppingList(materials);
+
+    // Aktualisiere die Markierungen für aktive Verkäufe
+    updateActiveListings();
 }
 
 // Event Handler für Calculate Profit Buttons

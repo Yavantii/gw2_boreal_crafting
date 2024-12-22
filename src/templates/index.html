@@ -56,6 +56,38 @@
             margin-left: 1rem;
         }
         
+        /* Styles für aktive Verkäufe */
+        .result-card {
+            position: relative;
+        }
+        .active-sale::before {
+            content: "🏷️";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 1.5em;
+            z-index: 1;
+        }
+        .active-sale.needs-relist::before {
+            content: "⚠️";
+        }
+        .active-sale-info {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .active-sale:hover .active-sale-info {
+            display: block;
+        }
+        
         /* Optimiere Sidebar für große Bildschirme */
         @media (min-width: 1400px) {
             .sidebar-col {
@@ -339,7 +371,6 @@
 
     <!-- Bootstrap und andere Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
     function calculateResults() {
         const amount = document.getElementById('amount').value;
@@ -393,6 +424,130 @@
                 console.error('Error:', error);
         });
     }
+
+    // Funktion zum Formatieren der Zeit
+    function formatTimeDifference(timestamp) {
+        const now = new Date();
+        const listingDate = new Date(timestamp);
+        const diffHours = Math.floor((now - listingDate) / (1000 * 60 * 60));
+        
+        if (diffHours < 24) {
+            return `${diffHours} Stunden`;
+        }
+        return `${Math.floor(diffHours / 24)} Tage`;
+    }
+
+    // Funktion zum Formatieren von Preisen
+    function formatGoldPrice(copper) {
+        const gold = Math.floor(copper / 10000);
+        const silver = Math.floor((copper % 10000) / 100);
+        const copperRest = copper % 100;
+        
+        return `${gold}G ${silver}S ${copperRest}C`;
+    }
+
+    // Funktion zum Aktualisieren der aktiven Verkäufe
+    function updateActiveListings() {
+        try {
+            // Debug: Zeige den Inhalt des localStorage
+            console.log('localStorage Inhalt:', localStorage.getItem('activeBorealSales'));
+            
+            // Hole aktive Verkäufe aus dem localStorage
+            const activeSales = JSON.parse(localStorage.getItem('activeBorealSales') || '[]');
+            console.log('Geparste aktive Verkäufe:', activeSales);
+            
+            // Mapping von englischen zu deutschen Namen
+            const nameMapping = {
+                'Restored Boreal Rifle': 'Wiederhergestelltes Boreal-Gewehr',
+                'Restored Boreal Pistol': 'Wiederhergestellte Boreal-Pistole',
+                'Restored Boreal Short Bow': 'Wiederhergestellter Boreal-Kurzbogen',
+                'Restored Boreal Longbow': 'Wiederhergestellter Boreal-Langbogen',
+                'Restored Boreal Focus': 'Wiederhergestellter Boreal-Fokus',
+                'Restored Boreal Staff': 'Wiederhergestellter Boreal-Stab',
+                'Restored Boreal Warhorn': 'Wiederhergestelltes Boreal-Kriegshorn',
+                'Restored Boreal Axe': 'Wiederhergestellte Boreal-Axt',
+                'Restored Boreal Dagger': 'Wiederhergestellter Boreal-Dolch',
+                'Restored Boreal Greatsword': 'Wiederhergestelltes Boreal-Großschwert',
+                'Restored Boreal Hammer': 'Wiederhergestellter Boreal-Hammer',
+                'Restored Boreal Mace': 'Wiederhergestellter Boreal-Streitkolben',
+                'Restored Boreal Shield': 'Wiederhergestelltes Boreal-Schild',
+                'Restored Boreal Sword': 'Wiederhergestelltes Boreal-Schwert',
+                'Restored Boreal Scepter': 'Wiederhergestelltes Boreal-Zepter',
+                'Restored Boreal Torch': 'Wiederhergestellte Boreal-Fackel'
+            };
+            
+            // Debug: Zeige alle gefundenen Ergebniskarten
+            const resultCards = document.querySelectorAll('.result-card');
+            console.log('Gefundene Ergebniskarten:', resultCards.length);
+            
+            // Entferne alte Markierungen
+            document.querySelectorAll('.active-sale').forEach(el => {
+                console.log('Entferne Markierung von:', el);
+                el.classList.remove('active-sale', 'needs-relist');
+                const info = el.querySelector('.active-sale-info');
+                if (info) info.remove();
+            });
+
+            // Finde alle Ergebniskarten
+            resultCards.forEach(card => {
+                const englishName = card.querySelector('.weapon-name').textContent;
+                const germanName = nameMapping[englishName];
+                console.log('Prüfe Waffe:', englishName, '(Deutsch:', germanName, ')');
+                
+                const activeSale = activeSales.find(sale => sale.name === germanName);
+                console.log('Gefundener aktiver Verkauf:', activeSale);
+
+                if (activeSale) {
+                    console.log('Markiere Karte als aktiv:', englishName);
+                    // Markiere Karte als aktiven Verkauf
+                    card.classList.add('active-sale');
+                    
+                    // Prüfe ob neu eingestellt werden sollte
+                    if (activeSale.hoursActive >= 48) {
+                        console.log('Karte muss neu eingestellt werden:', englishName);
+                        card.classList.add('needs-relist');
+                    }
+
+                    // Füge Info-Box hinzu
+                    const infoBox = document.createElement('div');
+                    infoBox.className = 'active-sale-info';
+                    infoBox.innerHTML = `
+                        <strong>Aktiver Verkauf</strong><br>
+                        Eingestellt vor: ${formatTimeDifference(activeSale.created)}<br>
+                        Verkaufspreis: ${formatGoldPrice(activeSale.price)}
+                        ${activeSale.hoursActive >= 48 ? '<br><span class="text-warning">⚠️ Neu einstellen empfohlen</span>' : ''}
+                    `;
+                    card.appendChild(infoBox);
+                }
+            });
+        } catch (error) {
+            console.error('Fehler beim Aktualisieren der aktiven Verkäufe:', error);
+        }
+    }
+
+    // Event-Listener für Updates von der Marktanalyse-Seite
+    window.addEventListener('activeSalesUpdated', function(event) {
+        console.log('Event empfangen:', event.detail);
+        localStorage.setItem('activeBorealSales', JSON.stringify(event.detail));
+        updateActiveListings();
+    });
+
+    // Initialisiere aktive Verkäufe beim Laden
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Seite geladen, initialisiere aktive Verkäufe');
+        updateActiveListings();
+    });
+
+    // Aktualisiere aktive Verkäufe nach dem Berechnen
+    document.getElementById('calculateButton').addEventListener('click', function() {
+        console.log('Calculate Button geklickt');
+        // Warte kurz, bis die Karten gerendert sind
+        setTimeout(() => {
+            console.log('Aktualisiere nach Berechnung');
+            updateActiveListings();
+        }, 100);
+    });
     </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
