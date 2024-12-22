@@ -34,18 +34,48 @@ body {
 
 .price-item {
     background-color: var(--card-bg);
-    padding: 10px 15px;
+    padding: 0.75rem 1rem;
     border-radius: 6px;
     border: 1px solid var(--border-color);
+    height: 100%;
 }
 
 .price-label {
     color: var(--text-primary);
     font-size: 0.9em;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.material-count {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.copy-btn {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.8em;
+    line-height: 1;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.copy-btn:hover {
+    opacity: 1;
+    color: var(--accent-color);
 }
 
 .price {
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 input[type="number"] {
@@ -847,4 +877,97 @@ td {
 .text-danger .copper,
 .text-primary .copper {
     color: var(--copper-color) !important;
+}
+
+/* Entferne Shopping Liste Styles */
+.shopping-list-section,
+#componentsList,
+#rawMaterialsList,
+#inscriptionsList {
+    display: none;
+}
+
+/* Optimiere Grid Layout */
+.market-prices-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+@media (min-width: 1400px) {
+    .market-prices-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+}
+
+@media (min-width: 1800px) {
+    .market-prices-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+/* Optimiere Sidebar */
+@media (min-width: 1400px) {
+    .filter-section {
+        max-width: 350px;
+    }
+}
+
+/* Optimiere Results Grid */
+#resultsList {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+}
+
+@media (min-width: 1400px) {
+    #resultsList {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+}
+
+@media (min-width: 1800px) {
+    #resultsList {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+@media (min-width: 2200px) {
+    #resultsList {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+}
+
+/* Ergebniskarten */
+#resultsList .card {
+    margin: 0;
+    height: 100%;
+}
+
+#resultsList .card-body {
+    padding: 1rem;
+}
+
+/* Entferne unnötige visuelle Elemente */
+.card-header h3::after {
+    display: none;
+}
+
+#profitsList {
+    border-bottom: none !important;
+}
+
+.border-top {
+    border-top: none !important;
+}
+
+/* Entferne alle Margins von Profitliste */
+#profitsList li {
+    margin: 0;
+    padding: 0.25rem 0;
+}
+
+/* Entferne ALLE Borders in der Profit Card */
+.card-body > div {
+    border: none !important;
 }
