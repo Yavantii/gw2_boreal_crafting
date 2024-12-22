@@ -14,66 +14,116 @@
         
         <!-- Aktuelle Marktpreise -->
         <div class="card mt-4 mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">Current Market Prices</h3>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-light" id="refreshPrices">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" id="calculateButton">
+                        <i class="bi bi-calculator"></i> Calculate
+                    </button>
+                </div>
             </div>
             <div class="card-body py-2">
-                <div class="d-flex flex-wrap gap-3 align-items-center">
-                    <div class="price-item">
-                        <span class="price-label">Berserker's Orichalcum Imbued Inscription:</span>
-                        {% if prices and prices.inscription %}
-                            <span class="price">
-                                <span class="gold">{{ prices.inscription.gold }}G</span>
-                                <span class="silver">{{ prices.inscription.silver }}S</span>
-                                <span class="copper">{{ prices.inscription.copper }}C</span>
-                            </span>
-                        {% else %}
-                            <span class="text-muted">Loading...</span>
-                        {% endif %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <div class="price-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="price-label d-block text-truncate" style="max-width: 200px;" title="Berserker's Orichalcum Imbued Inscription">
+                                        Berserker's Orichalcum Imbued Inscription
+                                    </span>
+                                    <div class="material-count">
+                                        <small class="text-muted">Benötigt: <span id="totalInscriptions">0</span>x</small>
+                                        <button class="btn btn-sm btn-link copy-btn p-0 ms-1" data-name="Berserker's Orichalcum Imbued Inscription">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if prices and prices.inscription %}
+                                    <span class="price ms-2" style="white-space: nowrap;">
+                                        <span class="gold">{{ prices.inscription.gold }}G</span>
+                                        <span class="silver">{{ prices.inscription.silver }}S</span>
+                                        <span class="copper">{{ prices.inscription.copper }}C</span>
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Loading...</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                    <div class="price-item">
-                        <span class="price-label">Orichalcum Ore:</span>
-                        {% if prices and prices.ori_ore %}
-                            <span class="price">
-                                <span class="gold">{{ prices.ori_ore.gold }}G</span>
-                                <span class="silver">{{ prices.ori_ore.silver }}S</span>
-                                <span class="copper">{{ prices.ori_ore.copper }}C</span>
-                            </span>
-                        {% else %}
-                            <span class="text-muted">Loading...</span>
-                        {% endif %}
+                    <div class="col">
+                        <div class="price-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="price-label d-block">Orichalcum Ore</span>
+                                    <div class="material-count">
+                                        <small class="text-muted">Benötigt: <span id="totalOrichalcum">0</span>x</small>
+                                        <button class="btn btn-sm btn-link copy-btn p-0 ms-1" data-name="Orichalcum Ore">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if prices and prices.ori_ore %}
+                                    <span class="price ms-2">
+                                        <span class="gold">{{ prices.ori_ore.gold }}G</span>
+                                        <span class="silver">{{ prices.ori_ore.silver }}S</span>
+                                        <span class="copper">{{ prices.ori_ore.copper }}C</span>
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Loading...</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                    <div class="price-item">
-                        <span class="price-label">Ancient Wood Log:</span>
-                        {% if prices and prices.ancient_wood %}
-                            <span class="price">
-                                <span class="gold">{{ prices.ancient_wood.gold }}G</span>
-                                <span class="silver">{{ prices.ancient_wood.silver }}S</span>
-                                <span class="copper">{{ prices.ancient_wood.copper }}C</span>
-                            </span>
-                        {% else %}
-                            <span class="text-muted">Loading...</span>
-                        {% endif %}
+                    <div class="col">
+                        <div class="price-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="price-label d-block">Ancient Wood Log</span>
+                                    <div class="material-count">
+                                        <small class="text-muted">Benötigt: <span id="totalAncientWood">0</span>x</small>
+                                        <button class="btn btn-sm btn-link copy-btn p-0 ms-1" data-name="Ancient Wood Log">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if prices and prices.ancient_wood %}
+                                    <span class="price ms-2">
+                                        <span class="gold">{{ prices.ancient_wood.gold }}G</span>
+                                        <span class="silver">{{ prices.ancient_wood.silver }}S</span>
+                                        <span class="copper">{{ prices.ancient_wood.copper }}C</span>
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Loading...</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                    <div class="price-item">
-                        <span class="price-label">Hardened Leather Section:</span>
-                        {% if prices and prices.leather %}
-                            <span class="price">
-                                <span class="gold">{{ prices.leather.gold }}G</span>
-                                <span class="silver">{{ prices.leather.silver }}S</span>
-                                <span class="copper">{{ prices.leather.copper }}C</span>
-                            </span>
-                        {% else %}
-                            <span class="text-muted">Loading...</span>
-                        {% endif %}
-                    </div>
-                    <div class="ms-auto">
-                        <button type="button" class="btn btn-sm btn-primary me-2" id="refreshPrices">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
-                        <button type="button" class="btn btn-sm btn-success" id="calculateButton">
-                            <i class="bi bi-calculator"></i> Calculate
-                        </button>
+                    <div class="col">
+                        <div class="price-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="price-label d-block">Hardened Leather Section</span>
+                                    <div class="material-count">
+                                        <small class="text-muted">Benötigt: <span id="totalLeather">0</span>x</small>
+                                        <button class="btn btn-sm btn-link copy-btn p-0 ms-1" data-name="Hardened Leather Section">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if prices and prices.leather %}
+                                    <span class="price ms-2">
+                                        <span class="gold">{{ prices.leather.gold }}G</span>
+                                        <span class="silver">{{ prices.leather.silver }}S</span>
+                                        <span class="copper">{{ prices.leather.copper }}C</span>
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Loading...</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -194,36 +244,6 @@
 
             <!-- Hauptinhalt -->
             <div class="col-md-9">
-                <!-- Shopping Liste -->
-        <div class="shopping-list-section">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Shopping Liste</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <h5>Rohmaterialien</h5>
-                            <ul class="list-unstyled" id="rawMaterialsList"></ul>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Inschriften</h5>
-                            <ul class="list-unstyled" id="inscriptionsList"></ul>
-                        </div>
-                        <div class="col-md-4">
-                            <h5>Komponenten</h5>
-                            <ul class="list-unstyled" id="componentsList"></ul>
-                        </div>
-                    </div>
-                    <div class="mt-3 text-end">
-                        <h5 class="mb-0">Gesamtkosten: 
-                            <span id="totalCost">0G 0S 0C</span>
-                        </h5>
-                    </div>
-                </div>
-            </div>
-        </div>
-
                 <!-- Profit Übersicht -->
         <div class="total-profits-section">
             <div class="card">
@@ -249,539 +269,58 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
-        // Funktion zum Formatieren der Währung
-        function formatCurrency(gold, silver, copper) {
-            return `<span class="gold">${gold}G</span> <span class="silver">${silver}S</span> <span class="copper">${copper}C</span>`;
-        }
-
-        // Funktion zum Berechnen der Gesamtkosten für die Shopping-Liste
-        function calculateTotalCost(materials, prices) {
-            let total = 0;
+    function calculateResults() {
+        const amount = document.getElementById('amount').value;
+        const sellPrice = document.getElementById('sellPrice').value;
+        
+        // Zeige Lade-Animation
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('resultsContainer').style.display = 'none';
+        
+        // Sende Anfrage an den Server
+        fetch('/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount: amount,
+                sellPrice: sellPrice
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Verstecke Lade-Animation
+            document.getElementById('loadingSpinner').style.display = 'none';
             
-            // Extrahiere die Preise aus den HTML-Elementen
-            const extractPrice = (element) => {
-                if (!element) return { gold: 0, silver: 0, copper: 0 };
-                const text = element.textContent.trim();
-                const matches = text.match(/(\d+)G\s+(\d+)S\s+(\d+)C/);
-                if (!matches) return { gold: 0, silver: 0, copper: 0 };
-                return {
-                    gold: parseInt(matches[1]) || 0,
-                    silver: parseInt(matches[2]) || 0,
-                    copper: parseInt(matches[3]) || 0
-                };
-            };
-
-            // Konvertiere Preise in Kupfer
-            const priceToCopper = (price) => {
-                return (price.gold * 10000) + (price.silver * 100) + price.copper;
-            };
-
-            // Berechne Gesamtkosten
-            if (materials.totalOrichalcum > 0) {
-                const price = extractPrice(prices.ori_ore);
-                total += materials.totalOrichalcum * priceToCopper(price);
-            }
-            if (materials.totalAncientWood > 0) {
-                const price = extractPrice(prices.ancient_wood);
-                total += materials.totalAncientWood * priceToCopper(price);
-            }
-            if (materials.totalLeather > 0) {
-                const price = extractPrice(prices.leather);
-                total += materials.totalLeather * priceToCopper(price);
-            }
-            if (materials.totalInscriptions > 0) {
-                const price = extractPrice(prices.inscription);
-                total += materials.totalInscriptions * priceToCopper(price);
-            }
-
-            return total;
-        }
-
-        // Funktion zum Aktualisieren der Shopping-Liste
-        function updateShoppingList(materials) {
-            const rawMaterialsList = document.getElementById('rawMaterialsList');
-            const inscriptionsList = document.getElementById('inscriptionsList');
-            const componentsList = document.getElementById('componentsList');
-            
-            // Aktualisiere Rohmaterialien
-            rawMaterialsList.innerHTML = `
-                <li class="mb-2 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Orichalcum Ore:</strong> ${materials.totalOrichalcum}
-                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Orichalcum Ore">
-                            <i class="bi bi-clipboard"></i>
-                        </button>
-                    </div>
-                </li>
-                <li class="mb-2 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Ancient Wood Log:</strong> ${materials.totalAncientWood}
-                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Ancient Wood Log">
-                            <i class="bi bi-clipboard"></i>
-                        </button>
-                    </div>
-                </li>
-                <li class="mb-2 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Hardened Leather Section:</strong> ${materials.totalLeather}
-                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Hardened Leather Section">
-                            <i class="bi bi-clipboard"></i>
-                        </button>
-                    </div>
-                </li>
-            `;
-            
-            // Aktualisiere Inscriptions
-            inscriptionsList.innerHTML = `
-                <li class="mb-2 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Berserker's Orichalcum Imbued Inscription:</strong> ${materials.totalInscriptions}
-                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="Berserker's Orichalcum Imbued Inscription">
-                            <i class="bi bi-clipboard"></i>
-                        </button>
-                    </div>
-                </li>
-            `;
-            
-            // Aktualisiere zu kaufende Komponenten
-            componentsList.innerHTML = materials.buyComponents.map(comp => `
-                <li class="mb-2 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>${comp.name}:</strong> ${comp.amount}
-                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${comp.name}">
-                            <i class="bi bi-clipboard"></i>
-                        </button>
-                    </div>
-                </li>
-            `).join('');
-            
-            // Event Listener für Copy Buttons
-            document.querySelectorAll('.copy-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const textToCopy = this.dataset.name;
-                    navigator.clipboard.writeText(textToCopy).then(() => {
-                        // Optional: Visuelles Feedback
-                        const originalText = this.innerHTML;
-                        this.innerHTML = '<i class="bi bi-check"></i>';
+            if (data.error) {
+                // Zeige Fehlermeldung
+                const errorAlert = document.getElementById('errorAlert');
+                errorAlert.textContent = data.error;
+                errorAlert.style.display = 'block';
                         setTimeout(() => {
-                            this.innerHTML = originalText;
-                        }, 1000);
-                    });
-                });
-            });
-            
-            // Hole aktuelle Preise
-            const prices = {
-                ori_ore: document.querySelector('[data-item="ori_ore"]'),
-                ancient_wood: document.querySelector('[data-item="ancient_wood"]'),
-                leather: document.querySelector('[data-item="leather"]'),
-                inscription: document.querySelector('[data-item="inscription"]')
-            };
-
-            // Berechne und aktualisiere Gesamtkosten
-            const totalCopperCost = calculateTotalCost(materials, prices);
-            const gold = Math.floor(totalCopperCost / 10000);
-            const silver = Math.floor((totalCopperCost % 10000) / 100);
-            const copper = totalCopperCost % 100;
-            
-            document.getElementById('totalCost').innerHTML = formatCurrency(gold, silver, copper);
-        }
-
-        // Funktion zum Berechnen des Profits
-        function calculateProfit(sellPrice, craftCost) {
-            const sellCopper = (sellPrice.gold * 10000) + (sellPrice.silver * 100) + sellPrice.copper;
-            const costCopper = (craftCost.gold * 10000) + (craftCost.silver * 100) + craftCost.copper;
-            
-            // Berechne Gebühren
-            const listingFee = Math.ceil(sellCopper * 0.05); // 5% Listing Fee
-            const exchangeFee = Math.ceil(sellCopper * 0.10); // 10% Exchange Fee
-            const totalFees = listingFee + exchangeFee;
-            
-            // Berechne Nettogewinn
-            const profitCopper = sellCopper - costCopper - totalFees;
-            
-            return {
-                gold: Math.floor(profitCopper / 10000),
-                silver: Math.floor((profitCopper % 10000) / 100),
-                copper: profitCopper % 100,
-                fees: {
-                    listingFee: {
-                        gold: Math.floor(listingFee / 10000),
-                        silver: Math.floor((listingFee % 10000) / 100),
-                        copper: listingFee % 100
-                    },
-                    exchangeFee: {
-                        gold: Math.floor(exchangeFee / 10000),
-                        silver: Math.floor((exchangeFee % 10000) / 100),
-                        copper: exchangeFee % 100
-                    }
-                }
-            };
-        }
-
-        // Event Handler für Calculate Profit Buttons
-        document.addEventListener('click', async function(e) {
-            if (e.target.classList.contains('calculate-profit')) {
-                const weaponName = e.target.dataset.weapon;
-                const weaponCard = e.target.closest('.card');
-                const netProfitSpan = weaponCard.querySelector('.net-profit');
-                const profitsList = document.getElementById('profitsList');
-
-                // Wenn der Profit bereits berechnet wurde, entferne ihn
-                if (netProfitSpan.textContent) {
-                    netProfitSpan.textContent = '';
-                    // Entferne den Eintrag aus der Profitliste
-                    const existingItem = Array.from(profitsList.children).find(item => 
-                        item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
-                    );
-                    if (existingItem) {
-                        profitsList.removeChild(existingItem);
-                        updateTotalProfit();
-                    }
-                    return;
-                }
-
-                if (!weaponName) {
-                    console.error('Missing weapon data');
-                    return;
-                }
-                
-                try {
-                    // Lade den aktuellen Verkaufspreis vom Trading Post
-                    const response = await fetch(`/fetch-weapon-price/${encodeURIComponent(weaponName)}`);
-                    if (!response.ok) throw new Error('Failed to fetch weapon price');
-                    const sellPrice = await response.json();
-                    
-                    // Finde die Herstellungskosten für die Waffe
-                    const costText = weaponCard.querySelector('.small.mb-2').textContent;
-                    const costMatches = costText.match(/Cost:\s+(\d+)G\s+(\d+)S\s+(\d+)C/);
-                    if (!costMatches) {
-                        console.error('Could not parse craft cost');
-                        return;
-                    }
-                    
-                    const craftCost = {
-                        gold: parseInt(costMatches[1]) || 0,
-                        silver: parseInt(costMatches[2]) || 0,
-                        copper: parseInt(costMatches[3]) || 0
-                    };
-
-                    // Berechne den Profit
-                    const profitData = calculateProfit(sellPrice, craftCost);
-
-                    // Aktualisiere den Profit in der Ergebniskarte
-                    netProfitSpan.className = `net-profit ms-2 ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
-                    netProfitSpan.innerHTML = `(Profit: ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)})`;
-
-                    // Aktualisiere die Profit-Anzeige
-                    const listItem = document.createElement('li');
-                    listItem.className = 'd-flex justify-content-between align-items-center mb-2';
-                    listItem.innerHTML = `
-                        <strong>${weaponName.replace(/_/g, ' ')}:</strong>
-                        <span class="${profitData.gold < 0 ? 'text-danger' : 'text-success'}">
-                            ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)}
-                        </span>
-                    `;
-
-                    // Füge neuen Eintrag hinzu
-                    profitsList.appendChild(listItem);
-
-                    // Aktualisiere Gesamtgewinn
-                    updateTotalProfit();
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Failed to calculate profit. Please try again.');
-                }
+                    errorAlert.style.display = 'none';
+                }, 5000);
+            } else {
+                // Zeige Ergebnisse
+                displayResults(data);
             }
-        });
-
-        // Funktion zum Aktualisieren des Gesamtgewinns
-        function updateTotalProfit() {
-            let totalProfitCopper = 0;
+        })
+        .catch(error => {
+            // Verstecke Lade-Animation
+            document.getElementById('loadingSpinner').style.display = 'none';
             
-            // Sammle alle Profit-Beträge
-            document.querySelectorAll('#profitsList li span').forEach(element => {
-                const goldMatch = element.querySelector('.gold');
-                const silverMatch = element.querySelector('.silver');
-                const copperMatch = element.querySelector('.copper');
-                
-                if (goldMatch && silverMatch && copperMatch) {
-                    const gold = parseInt(goldMatch.textContent) || 0;
-                    const silver = parseInt(silverMatch.textContent) || 0;
-                    const copper = parseInt(copperMatch.textContent) || 0;
-                    const isNegative = element.classList.contains('text-danger');
-                    const profitCopper = (gold * 10000) + (silver * 100) + copper;
-                    totalProfitCopper += isNegative ? -profitCopper : profitCopper;
-                }
-            });
+            // Zeige Fehlermeldung
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.textContent = 'Failed to calculate results. Please try again.';
+            errorAlert.style.display = 'block';
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
             
-            // Aktualisiere die Gesamtgewinn-Anzeige
-            const gold = Math.floor(Math.abs(totalProfitCopper) / 10000);
-            const silver = Math.floor((Math.abs(totalProfitCopper) % 10000) / 100);
-            const copper = Math.abs(totalProfitCopper) % 100;
-            const totalProfitElement = document.getElementById('totalProfit');
-            totalProfitElement.innerHTML = formatCurrency(
-                totalProfitCopper < 0 ? -gold : gold,
-                silver,
-                copper
-            );
-            totalProfitElement.className = totalProfitCopper < 0 ? 'h4 text-danger' : 'h4 text-success';
-        }
-
-        // Funktion zum Aktualisieren der Ergebnisliste
-        function updateResultsList(results) {
-            const resultsList = document.getElementById('resultsList');
-            resultsList.innerHTML = '';
-
-            // Sammle aktive Filter
-            const activeWeapons = Array.from(document.querySelectorAll('.weapon-filter:checked')).map(cb => cb.value);
-            const activeProfessions = Array.from(document.querySelectorAll('.profession-filter:checked')).map(cb => cb.value);
-
-            // Berechne Gesamtkosten und Materialien
-            let materials = {
-                totalOrichalcum: 0,
-                totalAncientWood: 0,
-                totalLeather: 0,
-                totalInscriptions: 0,
-                buyComponents: [] // Array für zu kaufende Komponenten
-            };
-
-            // Filtere und zeige Ergebnisse
-            const resultsContainer = document.createElement('div');
-            resultsContainer.className = 'row g-3';
-            resultsList.appendChild(resultsContainer);
-
-            Object.entries(results).forEach(([weaponName, data]) => {
-                if (activeProfessions.includes(data.profession) && activeWeapons.includes(weaponName)) {
-                    // Erstelle Ergebniskarte im Raster
-                    const cardContainer = document.createElement('div');
-                    cardContainer.className = 'col-md-6 col-lg-4';
-                    
-                    const card = document.createElement('div');
-                    card.className = 'card h-100';
-                    
-                    const cardBody = document.createElement('div');
-                    cardBody.className = 'card-body p-3';
-
-                    // Waffentitel und Gesamtkosten
-                    cardBody.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title mb-0">${weaponName}</h6>
-                            <button type="button" class="btn btn-outline-primary btn-sm calculate-profit" data-weapon="${weaponName}">
-                                Profit
-                            </button>
-                        </div>
-                        <div class="small mb-2">
-                            <strong>Cost:</strong> 
-                            ${formatCurrency(data.total.gold, data.total.silver, data.total.copper)}
-                            <span class="net-profit ms-2"></span>
-                        </div>
-                    `;
-
-                    // Komponenten Details
-                    const componentsList = document.createElement('div');
-                    componentsList.className = 'components-list small';
-                    
-                    Object.entries(data.components).forEach(([compName, compData]) => {
-                        const compDiv = document.createElement('div');
-                        compDiv.className = 'component-item mb-1';
-                        
-                        // Formatiere den Komponentennamen
-                        let displayName = compName;
-                        if (compName === 'inscription') {
-                            displayName = "Berserker's Orichalcum Imbued Inscription";
-                        }
-                        
-                        // HTML für die Komponente
-                        let componentHtml = `
-                            <div class="d-flex justify-content-between align-items-start">
-                                <span class="${compData.buyFromTP ? 'text-warning' : ''}">${displayName}:</span>
-                                <div class="text-end">
-                                    <span class="${compData.buyFromTP ? 'text-warning' : ''}">${formatCurrency(compData.gold, compData.silver, compData.copper)}</span>
-                                </div>
-                            </div>`;
-                        
-                        compDiv.innerHTML = componentHtml;
-                        
-                        // Verarbeite Materialien und zu kaufende Komponenten
-                        if (compData.buyFromTP && compName !== 'inscription') {
-                            // Füge zu kaufende Komponente zur Liste hinzu
-                            const existingComp = materials.buyComponents.find(c => c.name === displayName);
-                            if (existingComp) {
-                                existingComp.amount += 1;
-                            } else {
-                                materials.buyComponents.push({
-                                    name: displayName,
-                                    amount: 1
-                                });
-                            }
-                            
-                            // Zeige Trading Post Hinweis mit Copy Button
-                            const materialsList = document.createElement('div');
-                            materialsList.className = 'component-materials ms-3';
-                            materialsList.style.fontSize = '0.85em';
-                            materialsList.innerHTML = `
-                                <div class="d-flex align-items-center">
-                                    <span class="text-warning">Trading Post</span>
-                                    <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${displayName}" style="padding: 0px 4px; font-size: 0.9em;">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                </div>
-                            `;
-                            compDiv.appendChild(materialsList);
-                        } else {
-                            // Verarbeite Materialien für zu craftende Komponenten
-                            if (compData.materials) {
-                                const materialsList = document.createElement('div');
-                                materialsList.className = 'component-materials ms-3 text-muted';
-                                materialsList.style.fontSize = '0.85em';
-                                
-                                const formattedMaterials = Object.entries(compData.materials).map(([matName, amount]) => {
-                                    // Zähle Materialien
-                                    switch(matName) {
-                                        case 'ori_ore':
-                                            materials.totalOrichalcum += amount;
-                                            return `Orichalcum Ore: ${amount}`;
-                                        case 'ancient_wood':
-                                            materials.totalAncientWood += amount;
-                                            return `Ancient Wood Log: ${amount}`;
-                                        case 'leather':
-                                            materials.totalLeather += amount;
-                                            return `Hardened Leather Section: ${amount}`;
-                                        case 'inscription':
-                                            materials.totalInscriptions += amount;
-                                            return `Berserker's Orichalcum Imbued Inscription: ${amount}`;
-                                        default:
-                                            return `${matName}: ${amount}`;
-                                    }
-                                }).join(', ');
-                                
-                                materialsList.textContent = formattedMaterials;
-                                compDiv.appendChild(materialsList);
-                            }
-                        }
-                        
-                        // Wenn es sich um eine Inscription handelt, zähle sie als benötigtes Material
-                        if (compName === 'inscription') {
-                            materials.totalInscriptions += 1;
-                        }
-
-                        componentsList.appendChild(compDiv);
-                    });
-                    
-                    cardBody.appendChild(componentsList);
-                    card.appendChild(cardBody);
-                    cardContainer.appendChild(card);
-                    resultsContainer.appendChild(cardContainer);
-                }
-            });
-
-            // Aktualisiere Shopping Liste mit den gesammelten Materialien
-            updateShoppingList(materials);
-        }
-
-        // Funktion zum Aktualisieren der Preise
-        async function refreshPrices() {
-            try {
-                const response = await fetch('/refresh-prices');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const prices = await response.json();
-                
-                // Aktualisiere die Preisanzeigen
-                for (const [itemName, price] of Object.entries(prices)) {
-                    const priceElement = document.querySelector(`[data-item="${itemName}"]`);
-                    if (priceElement) {
-                        priceElement.innerHTML = `${price.gold}G ${price.silver}S ${price.copper}C`;
-                    }
-                }
-            } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to refresh prices. Please try again.');
-            }
-        }
-
-        // Event Listener für den Refresh Button
-        document.getElementById('refreshPrices').addEventListener('click', refreshPrices);
-
-        // Funktion zum Berechnen der Ergebnisse
-        async function calculateResults() {
-            try {
-                const response = await fetch('/calculate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Network response was not ok');
-                const results = await response.json();
-                
-                // Aktualisiere die Ergebnisliste basierend auf den aktiven Filtern
-                updateResultsList(results);
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to calculate results. Please try again.');
-            }
-        }
-
-        // Event Listener für den Calculate Button
-        document.getElementById('calculateButton').addEventListener('click', calculateResults);
-
-        // Event Listener für Filter-Änderungen
-        document.querySelectorAll('.profession-filter, .weapon-filter').forEach(filter => {
-            filter.addEventListener('change', function() {
-                // Keine automatische Neuberechnung mehr bei Filteränderungen
-            });
         });
-
-        // Event Listener für Profession Filter (Parent Checkboxes)
-        document.querySelectorAll('.profession-filter').forEach(professionCheckbox => {
-            professionCheckbox.addEventListener('change', function() {
-                const profession = this.value.toLowerCase();
-                const weaponCheckboxes = document.querySelectorAll(`.${profession}-weapon`);
-                weaponCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-            });
-        });
-
-        // Event Listener für Collapse-Funktionalität
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = [
-                document.querySelector('.shopping-list-section'),
-                document.querySelector('.total-profits-section')
-            ];
-
-            sections.forEach(section => {
-                const header = section.querySelector('.card-header');
-                header.addEventListener('click', () => {
-                    section.classList.toggle('collapsed');
-                });
-            });
-
-            // Initial collapse
-            sections.forEach(section => section.classList.add('collapsed'));
-
-            // Automatisch Ergebnisse berechnen beim Laden der Seite
-            calculateResults();
-        });
-
-        // Event Listener für Copy Buttons in den Ergebniskarten
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.copy-btn')) {
-                const button = e.target.closest('.copy-btn');
-                const textToCopy = button.dataset.name;
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    // Visuelles Feedback
-                    const originalHtml = button.innerHTML;
-                    button.innerHTML = '<i class="bi bi-check"></i>';
-                    setTimeout(() => {
-                        button.innerHTML = originalHtml;
-                    }, 1000);
-                });
-            }
-        });
+    }
     </script>
 </body>
 </html>

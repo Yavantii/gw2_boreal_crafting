@@ -63,167 +63,173 @@ function displayResults(results) {
     resultsDiv.innerHTML = '';
     resultsDiv.appendChild(resultsContainer);
 
-    Object.entries(results).forEach(([weaponName, data]) => {
-        // Überspringe den 'materials' Eintrag
-        if (weaponName === 'materials') return;
+    // Sortiere die Ergebnisse nach der weaponOrder
+    const sortedResults = weaponOrder
+        .filter(weaponName => {
+            const data = results[weaponName];
+            return data && activeProfessions.includes(data.profession) && activeWeapons.includes(weaponName);
+        })
+        .map(weaponName => [weaponName, results[weaponName]]);
 
-        if (activeProfessions.includes(data.profession) && activeWeapons.includes(weaponName)) {
-            // Verarbeite die Komponenten und zähle Materialien
-            Object.entries(data.components).forEach(([compName, compData]) => {
-                // Zähle Materialien nur, wenn die Komponente NICHT im TP gekauft wird
-                if (!compData.buyFromTP && compData.materials) {
-                    Object.entries(compData.materials).forEach(([matName, amount]) => {
-                        switch(matName) {
-                            case 'ori_ore':
-                                materials.totalOrichalcum += amount;
-                                break;
-                            case 'ancient_wood':
-                                materials.totalAncientWood += amount;
-                                break;
-                            case 'leather':
-                                materials.totalLeather += amount;
-                                break;
-                        }
+    sortedResults.forEach(([weaponName, data]) => {
+        // Zähle eine Inscription pro Waffe
+        materials.totalInscriptions += 1;
+        
+        // Verarbeite die Komponenten und zähle Materialien
+        Object.entries(data.components).forEach(([compName, compData]) => {
+            // Zähle Materialien nur, wenn die Komponente NICHT im TP gekauft wird
+            if (!compData.buyFromTP && compData.materials) {
+                Object.entries(compData.materials).forEach(([matName, amount]) => {
+                    switch(matName) {
+                        case 'ori_ore':
+                            materials.totalOrichalcum += amount;
+                            break;
+                        case 'ancient_wood':
+                            materials.totalAncientWood += amount;
+                            break;
+                        case 'leather':
+                            materials.totalLeather += amount;
+                            break;
+                    }
+                });
+            }
+            
+            // Wenn es eine Inscription ist und nicht im TP gekauft wird
+            if (compName === "Berserker's Orichalcum Imbued Inscription" && !compData.buyFromTP) {
+                materials.totalInscriptions += 1;
+            }
+            
+            // Wenn die Komponente im TP gekauft werden soll
+            if (compData.buyFromTP) {
+                const displayName = compName === 'inscription' ? "Berserker's Orichalcum Imbued Inscription" : compName;
+                const existingComp = materials.buyComponents.find(c => c.name === displayName);
+                if (existingComp) {
+                    existingComp.amount += 1;
+                } else {
+                    materials.buyComponents.push({
+                        name: displayName,
+                        amount: 1
                     });
                 }
-                
-                // Wenn es eine Inscription ist und nicht im TP gekauft wird
-                if (compName === "Berserker's Orichalcum Imbued Inscription" && !compData.buyFromTP) {
-                    materials.totalInscriptions += 1;
-                }
-                
-                // Wenn die Komponente im TP gekauft werden soll
-                if (compData.buyFromTP) {
-                    const displayName = compName === 'inscription' ? "Berserker's Orichalcum Imbued Inscription" : compName;
-                    const existingComp = materials.buyComponents.find(c => c.name === displayName);
-                    if (existingComp) {
-                        existingComp.amount += 1;
-                    } else {
-                        materials.buyComponents.push({
-                            name: displayName,
-                            amount: 1
-                        });
-                    }
-                }
-            });
-            
-            // Erstelle Ergebniskarte im Raster
-            const cardContainer = document.createElement('div');
-            cardContainer.className = 'col-md-6 col-lg-4';
-            
-            const card = document.createElement('div');
-            card.className = 'card h-100';
-            
-            const cardBody = document.createElement('div');
-            cardBody.className = 'card-body p-3';
+            }
+        });
+        
+        // Erstelle Ergebniskarte im Raster
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'col-md-6 col-lg-4';
+        
+        const card = document.createElement('div');
+        card.className = 'card h-100';
+        
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body p-3';
 
-            // Waffentitel und Gesamtkosten
-            cardBody.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="card-title mb-0">${weaponName}</h6>
-                    <button type="button" class="btn btn-outline-primary btn-sm calculate-profit" data-weapon="${weaponName}">
-                        Profit
-                    </button>
-                </div>
-                <div class="small mb-2">
-                    <strong>Cost:</strong> 
-                    ${formatCurrency(data.total.gold, data.total.silver, data.total.copper)}
-                    <span class="net-profit ms-2"></span>
-                </div>
-            `;
+        // Waffentitel und Gesamtkosten
+        cardBody.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="card-title mb-0">${weaponName}</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary calculate-profit" data-weapon="${weaponName}">
+                    Profit
+                </button>
+            </div>
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+                <div><strong>Cost:</strong> ${formatCurrency(data.total.gold, data.total.silver, data.total.copper)}</div>
+                <div class="net-profit text-end" style="white-space: nowrap;"></div>
+            </div>
+        `;
 
-            // Komponenten Details
-            const componentsList = document.createElement('div');
-            componentsList.className = 'components-list small';
-            
-            Object.entries(data.components).forEach(([compName, compData]) => {
-                const compDiv = document.createElement('div');
-                compDiv.className = 'component-item mb-1';
-                
-                // Formatiere den Komponentennamen
-                let displayName = compName;
-                if (compName === 'inscription') {
-                    displayName = "Berserker's Orichalcum Imbued Inscription";
-                }
-                
-                // HTML für die Komponente
-                let componentHtml = `
-                    <div class="d-flex justify-content-between align-items-start">
-                        <span class="${compData.buyFromTP ? 'text-warning' : ''}">${displayName}:</span>
-                        <div class="text-end">
-                            <span class="${compData.buyFromTP ? 'text-warning' : ''}">${formatCurrency(compData.gold, compData.silver, compData.copper)}</span>
-                        </div>
-                    </div>`;
-                
-                compDiv.innerHTML = componentHtml;
-                
-                // Verarbeite Materialien und zu kaufende Komponenten
-                if (compData.buyFromTP && compName !== 'inscription') {
-                    // Füge zu kaufende Komponente zur Liste hinzu
-                    const existingComp = materials.buyComponents.find(c => c.name === displayName);
-                    if (existingComp) {
-                        existingComp.amount += 1;
-                    } else {
-                        materials.buyComponents.push({
-                            name: displayName,
-                            amount: 1
-                        });
-                    }
-                    
-                    // Zeige Trading Post Hinweis mit Copy Button
-                    const materialsList = document.createElement('div');
-                    materialsList.className = 'component-materials ms-3';
-                    materialsList.style.fontSize = '0.85em';
-                    materialsList.innerHTML = `
-                        <div class="d-flex align-items-center">
-                            <span class="text-warning">Trading Post</span>
-                            <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${displayName}" style="padding: 0px 4px; font-size: 0.9em;">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
-                        </div>
-                    `;
-                    compDiv.appendChild(materialsList);
-                } else {
-                    // Verarbeite Materialien für zu craftende Komponenten
-                    if (compData.materials) {
-                        const materialsList = document.createElement('div');
-                        materialsList.className = 'component-materials ms-3 text-muted';
-                        materialsList.style.fontSize = '0.85em';
-                        
-                        const formattedMaterials = Object.entries(compData.materials).map(([matName, amount]) => {
-                            // Entferne die Materialzählung hier, da sie bereits vorher gemacht wurde
-                            switch(matName) {
-                                case 'ori_ore':
-                                    return `Orichalcum Ore: ${amount}`;
-                                case 'ancient_wood':
-                                    return `Ancient Wood Log: ${amount}`;
-                                case 'leather':
-                                    return `Hardened Leather Section: ${amount}`;
-                                case 'inscription':
-                                    return `Berserker's Orichalcum Imbued Inscription: ${amount}`;
-                                default:
-                                    return `${matName}: ${amount}`;
-                            }
-                        }).join(', ');
-                        
-                        materialsList.textContent = formattedMaterials;
-                        compDiv.appendChild(materialsList);
-                    }
-                }
-                
-                // Wenn es sich um eine Inscription handelt, zähle sie als benötigtes Material
-                if (compName === 'inscription') {
-                    materials.totalInscriptions += 1;
-                }
-
-                componentsList.appendChild(compDiv);
-            });
-            
-            cardBody.appendChild(componentsList);
-            card.appendChild(cardBody);
-            cardContainer.appendChild(card);
-            resultsContainer.appendChild(cardContainer);
+        // Wenn ein Profit bereits berechnet wurde, stelle den Button-Status wieder her
+        if (currentResults[weaponName].profit) {
+            const profitButton = cardBody.querySelector('.calculate-profit');
+            profitButton.classList.remove('btn-outline-primary');
+            profitButton.classList.add('btn-outline-success');
+            const netProfitSpan = cardBody.querySelector('.net-profit');
+            const profitData = currentResults[weaponName].profit;
+            netProfitSpan.className = `net-profit text-end ${profitData.netProfit.gold < 0 ? 'text-danger' : 'text-success'} small`;
+            netProfitSpan.innerHTML = `${formatCurrency(Math.abs(profitData.netProfit.gold), profitData.netProfit.silver, profitData.netProfit.copper)}`;
         }
+
+        // Komponenten Details
+        const componentsList = document.createElement('div');
+        componentsList.className = 'components-list small';
+        
+        Object.entries(data.components).forEach(([compName, compData]) => {
+            const compDiv = document.createElement('div');
+            compDiv.className = 'component-item mb-1';
+            
+            // Formatiere den Komponentennamen
+            let displayName = compName;
+            if (compName === 'inscription') {
+                displayName = "Berserker's Orichalcum Imbued Inscription";
+            }
+            
+            // HTML für die Komponente mit kleinerer Schrift und ohne Zeilenumbrüche
+            let componentHtml = `
+                <div class="d-flex justify-content-between align-items-center" style="font-size: 0.8rem; white-space: nowrap;">
+                    <div class="text-truncate pe-2" style="max-width: 70%;" title="${displayName}">
+                        <span class="${compData.buyFromTP ? 'text-warning' : ''}">${displayName}</span>
+                    </div>
+                    <div class="text-end" style="min-width: 30%;">
+                        <span class="${compData.buyFromTP ? 'text-warning' : ''}">${formatCurrency(compData.gold, compData.silver, compData.copper)}</span>
+                    </div>
+                </div>`;
+            
+            compDiv.innerHTML = componentHtml;
+            
+            // Verarbeite Materialien und zu kaufende Komponenten
+            if (compData.buyFromTP && compName !== 'inscription') {
+                // Zeige Trading Post Hinweis mit Copy Button
+                const materialsList = document.createElement('div');
+                materialsList.className = 'component-materials ms-3';
+                materialsList.style.fontSize = '0.75rem';
+                materialsList.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="text-warning">Trading Post</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn" data-name="${displayName}" style="padding: 0px 4px; font-size: 0.7rem;">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                `;
+                compDiv.appendChild(materialsList);
+            } else {
+                // Verarbeite Materialien für zu craftende Komponenten
+                if (compData.materials) {
+                    const materialsList = document.createElement('div');
+                    materialsList.className = 'component-materials ms-3 text-muted';
+                    materialsList.style.fontSize = '0.75rem';
+                    materialsList.style.whiteSpace = 'nowrap';
+                    materialsList.style.overflow = 'hidden';
+                    materialsList.style.textOverflow = 'ellipsis';
+                    
+                    const formattedMaterials = Object.entries(compData.materials).map(([matName, amount]) => {
+                        // Entferne die Materialzählung hier, da sie bereits vorher gemacht wurde
+                        switch(matName) {
+                            case 'ori_ore':
+                                return `Orichalcum Ore: ${amount}`;
+                            case 'ancient_wood':
+                                return `Ancient Wood Log: ${amount}`;
+                            case 'leather':
+                                return `Hardened Leather Section: ${amount}`;
+                            case 'inscription':
+                                return `Berserker's Orichalcum Imbued Inscription: ${amount}`;
+                            default:
+                                return `${matName}: ${amount}`;
+                        }
+                    }).join(', ');
+                    
+                    materialsList.textContent = formattedMaterials;
+                    materialsList.title = formattedMaterials; // Zeige vollständigen Text beim Hover
+                    compDiv.appendChild(materialsList);
+                }
+            }
+
+            componentsList.appendChild(compDiv);
+        });
+        
+        cardBody.appendChild(componentsList);
+        card.appendChild(cardBody);
+        cardContainer.appendChild(card);
+        resultsContainer.appendChild(cardContainer);
     });
 
     // Aktualisiere die Materialmengen in den Anzeigen NACHDEM alle Berechnungen abgeschlossen sind
@@ -247,6 +253,9 @@ document.addEventListener('click', async function(e) {
         // Wenn der Profit bereits berechnet wurde, entferne ihn
         if (netProfitSpan.textContent) {
             netProfitSpan.textContent = '';
+            // Ändere Button zurück zu blau
+            e.target.classList.remove('btn-outline-success');
+            e.target.classList.add('btn-outline-primary');
             // Entferne den Eintrag aus der Profitliste
             const existingItem = Array.from(profitsList.children).find(item => 
                 item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
@@ -286,9 +295,13 @@ document.addEventListener('click', async function(e) {
             // Berechne den Profit
             const profitData = calculateProfit(sellPrice, craftCost);
 
+            // Ändere Button zu grün
+            e.target.classList.remove('btn-outline-primary');
+            e.target.classList.add('btn-outline-success');
+
             // Aktualisiere den Profit in der Ergebniskarte
-            netProfitSpan.className = `net-profit ms-2 ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
-            netProfitSpan.innerHTML = `(Profit: ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)})`;
+            netProfitSpan.className = `net-profit text-end ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
+            netProfitSpan.innerHTML = `${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)}`;
 
             // Aktualisiere die Profit-Anzeige
             const listItem = document.createElement('li');
