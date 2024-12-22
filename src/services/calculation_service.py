@@ -151,6 +151,13 @@ class CalculationService:
         materials = self.prepare_materials(prices)
         
         results = {}
+        total_materials = {
+            'totalOrichalcum': 0,
+            'totalAncientWood': 0,
+            'totalLeather': 0,
+            'totalInscriptions': 0
+        }
+        
         for weapon_type, recipe in self.calculator.get_all_recipes().items():
             # Berechne detaillierte Komponentenkosten
             component_costs = self.calculator.calculate_detailed_cost(recipe, materials)
@@ -163,6 +170,18 @@ class CalculationService:
                 components_json[comp_name] = self.calculate_component_costs(
                     comp_name, comp_data, component_prices
                 )
+                # Summiere die Materialien
+                if 'materials' in comp_data:
+                    for material, amount in comp_data.materials.items():
+                        if material == 'ori_ore':
+                            total_materials['totalOrichalcum'] += amount
+                        elif material == 'ancient_wood':
+                            total_materials['totalAncientWood'] += amount
+                        elif material == 'leather':
+                            total_materials['totalLeather'] += amount
+            
+            # Zähle Inscriptions
+            total_materials['totalInscriptions'] += 1
 
             # Berechne die Gesamtkosten neu basierend auf den günstigsten Optionen
             total_copper = sum(
@@ -187,5 +206,8 @@ class CalculationService:
                 'profession': weapon_type.profession.value,
                 'profit': profit_info if profit_info else None
             }
+        
+        # Füge die Gesamtmaterialien zu den Ergebnissen hinzu
+        results['materials'] = total_materials
         
         return results 

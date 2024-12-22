@@ -244,6 +244,29 @@ function displayResults(results) {
 
 // Event Handler für Calculate Profit Buttons
 document.addEventListener('click', async function(e) {
+    // Copy Button Handler
+    if (e.target.closest('.copy-btn')) {
+        const button = e.target.closest('.copy-btn');
+        const itemName = button.getAttribute('data-name');
+        try {
+            await navigator.clipboard.writeText(itemName);
+            
+            // Visuelles Feedback
+            const originalIcon = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i>';
+            button.classList.add('text-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalIcon;
+                button.classList.remove('text-success');
+            }, 1000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+        return;
+    }
+
+    // Calculate Profit Button Handler
     if (e.target.classList.contains('calculate-profit')) {
         const weaponName = e.target.dataset.weapon;
         const weaponCard = e.target.closest('.card');

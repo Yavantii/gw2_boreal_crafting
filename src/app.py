@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, jsonify
 from models.materials import GW2Price, BaseMaterials
 from calculator.crafting_calculator import CraftingCalculator
+from market_routes import market_bp
 import requests
-import os
 from datetime import datetime, timedelta
 from functools import wraps
 
 app = Flask(__name__)
+app.register_blueprint(market_bp)
+
 calculator = CraftingCalculator()
 
 API_KEY = "53E1B734-BE78-6D4B-BFC4-AB5A7BD0CE8E8CE228E8-69FC-4E92-9CAE-AD4C68D3AB44"
@@ -174,56 +176,11 @@ def cache_api_call(duration=CACHE_DURATION):
         return wrapper
     return decorator
 
-def convert_to_coins(gold=0, silver=0, copper=0):
-    """Konvertiert Gold/Silber/Kupfer in Gesamtkupfer"""
-    return (gold * 10000) + (silver * 100) + copper
-
-def convert_from_coins(copper_amount):
-    """Konvertiert Gesamtkupfer in Gold/Silber/Kupfer"""
-    gold = copper_amount // 10000
-    silver = (copper_amount % 10000) // 100
-    copper = copper_amount % 100
-    return {'gold': gold, 'silver': silver, 'copper': copper}
-
 @app.route('/')
 def index():
     prices = fetch_prices()
     component_prices = fetch_component_prices()
     return render_template('index.html', prices=prices, component_prices=component_prices)
-
-@cache_api_call()
-def fetch_component_prices():
-    item_ids = ",".join(str(id) for id in COMPONENT_IDS.values())
-    url = API_URL.format(item_ids)
-    headers = {"Authorization": f"Bearer {API_KEY}"}
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        prices = response.json()
-        
-        # Validiere die API-Antwort
-        validate_api_response(prices)
-        
-        return {
-            comp_name: GW2Price(
-                gold=price["sells"]["unit_price"] // 10000,
-                silver=(price["sells"]["unit_price"] % 10000) // 100,
-                copper=price["sells"]["unit_price"] % 100
-            )
-            for comp_name, comp_id in COMPONENT_IDS.items()
-            for price in prices
-            if price["id"] == comp_id
-        }
-    except requests.exceptions.RequestException as e:
-        app.logger.error(f"Network error while fetching component prices: {str(e)}")
-        return None
-    except ValueError as e:
-        app.logger.error(f"Invalid API response for component prices: {str(e)}")
-        return None
-    except Exception as e:
-        app.logger.error(f"Unexpected error while fetching component prices: {str(e)}")
-        return None
 
 @cache_api_call()
 def fetch_prices():
@@ -257,6 +214,40 @@ def fetch_prices():
         return None
     except Exception as e:
         app.logger.error(f"Unexpected error while fetching prices: {str(e)}")
+        return None
+
+@cache_api_call()
+def fetch_component_prices():
+    item_ids = ",".join(str(id) for id in COMPONENT_IDS.values())
+    url = API_URL.format(item_ids)
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        prices = response.json()
+        
+        # Validiere die API-Antwort
+        validate_api_response(prices)
+        
+        return {
+            comp_name: GW2Price(
+                gold=price["sells"]["unit_price"] // 10000,
+                silver=(price["sells"]["unit_price"] % 10000) // 100,
+                copper=price["sells"]["unit_price"] % 100
+            )
+            for comp_name, comp_id in COMPONENT_IDS.items()
+            for price in prices
+            if price["id"] == comp_id
+        }
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Network error while fetching component prices: {str(e)}")
+        return None
+    except ValueError as e:
+        app.logger.error(f"Invalid API response for component prices: {str(e)}")
+        return None
+    except Exception as e:
+        app.logger.error(f"Unexpected error while fetching component prices: {str(e)}")
         return None
 
 @app.route('/calculate', methods=['POST'])
@@ -392,7 +383,11 @@ def fetch_weapon_price(weapon_name):
             raise ValueError("Missing required fields in weapon price response")
             
         sells = data['sells']['unit_price']
-        return jsonify(convert_from_coins(sells))
+        return jsonify({
+            'gold': sells // 10000,
+            'silver': (sells % 10000) // 100,
+            'copper': sells % 100
+        })
         
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Network error while fetching weapon price: {str(e)}")
