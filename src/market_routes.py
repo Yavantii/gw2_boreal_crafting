@@ -1,18 +1,28 @@
 from flask import Blueprint, render_template, jsonify
 import sqlite3
 from datetime import datetime, timedelta
-from market_research import TRACKED_ITEMS, format_price
+from market_research import TRACKED_ITEMS, format_price, init_db
+import json
+import os
+
+# Absoluter Pfad zur Datenbank
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'market_data.db')
+
+# Initialisiere die Datenbank beim Start
+init_db()
 
 market_bp = Blueprint('market', __name__)
 
 def get_db():
-    conn = sqlite3.connect('market_data.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 @market_bp.route('/market')
 def market_analysis():
-    return render_template('market_analysis.html', items=TRACKED_ITEMS)
+    # Sortiere die Items nach Namen
+    sorted_items = dict(sorted(TRACKED_ITEMS.items(), key=lambda x: x[1]))
+    return render_template('market_analysis.html', items=sorted_items)
 
 @market_bp.route('/api/market/current')
 def current_market_data():
@@ -148,5 +158,132 @@ def get_recommendations():
             })
         
         return jsonify(recommendations)
+    finally:
+        conn.close() 
+
+@market_bp.route('/api/market/details/<int:item_id>')
+def get_item_details(item_id):
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        
+        # Hole die letzten 24 Stunden an Snapshots
+        c.execute('''
+            SELECT 
+                strftime('%Y-%m-%d %H:00:00', timestamp) as hour,
+                AVG(lowest_sell) as avg_price,
+                MIN(lowest_sell) as min_price,
+                MAX(lowest_sell) as max_price,
+                AVG(total_sell_listings) as avg_listings,
+                MAX(sell_listing_positions) as latest_positions
+            FROM market_snapshots
+            WHERE item_id = ? 
+            AND timestamp >= datetime('now', '-24 hours')
+            GROUP BY strftime('%Y-%m-%d %H:00:00', timestamp)
+            ORDER BY hour ASC
+        ''', (item_id,))
+        
+        hourly_data = []
+        for row in c.fetchall():
+            hourly_data.append({
+                'timestamp': row[0],
+                'avg_price': int(row[1]),
+                'min_price': row[2],
+                'max_price': row[3],
+                'avg_listings': int(row[4]),
+                'positions': json.loads(row[5]) if row[5] else []
+            })
+        
+        # Hole die letzten 7 Tage an Tagesstatistiken
+        c.execute('''
+            SELECT 
+                date,
+                avg_price,
+                min_price,
+                max_price,
+                avg_listings,
+                sales_estimate
+            FROM daily_stats
+            WHERE item_id = ?
+            AND date >= date('now', '-7 days')
+            ORDER BY date ASC
+        ''', (item_id,))
+        
+        daily_stats = []
+        for row in c.fetchall():
+            daily_stats.append({
+                'date': row[0],
+                'avg_price': row[1],
+                'min_price': row[2],
+                'max_price': row[3],
+                'avg_listings': int(row[4]),
+                'sales_estimate': row[5]
+            })
+        
+        # Aktuelle Position im Handelsposten
+        current_position = None
+        if hourly_data and hourly_data[-1]['positions']:
+            positions = hourly_data[-1]['positions']
+            total_items = sum(p['quantity'] for p in positions)
+            current_position = {
+                'total_listings': total_items,
+                'price_points': positions[:5]  # Top 5 Preispunkte
+            }
+        
+        return jsonify({
+            'hourly_data': hourly_data,
+            'daily_stats': daily_stats,
+            'current_position': current_position,
+            'name': TRACKED_ITEMS.get(item_id, 'Unbekanntes Item')
+        })
+        
+    finally:
+        conn.close() 
+
+# Neue Route für den Service-Status
+@market_bp.route('/api/market/service-status')
+def service_status():
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Prüfe den letzten Snapshot
+        c.execute('''
+            SELECT MAX(timestamp) as last_update
+            FROM market_snapshots
+        ''')
+        
+        result = c.fetchone()
+        last_update = result['last_update'] if result and result['last_update'] else None
+        
+        if not last_update:
+            return jsonify({
+                'status': 'inactive',
+                'message': 'Keine Daten vorhanden',
+                'last_update': None
+            })
+            
+        last_update_time = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+        time_diff = datetime.now() - last_update_time
+        
+        if time_diff.total_seconds() > 600:  # 10 Minuten
+            status = 'inactive'
+            message = 'Service läuft nicht (Letzte Aktualisierung vor mehr als 10 Minuten)'
+        else:
+            status = 'active'
+            message = 'Service läuft'
+            
+        return jsonify({
+            'status': status,
+            'message': message,
+            'last_update': last_update
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Fehler beim Prüfen des Service-Status: {str(e)}',
+            'last_update': None
+        })
     finally:
         conn.close() 

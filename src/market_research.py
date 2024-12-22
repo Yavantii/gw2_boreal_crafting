@@ -4,7 +4,17 @@ import json
 import sqlite3
 import time
 from pathlib import Path
+import logging
+import os
 
+# Logging konfigurieren
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Absoluter Pfad zur Datenbank
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'market_data.db')
+
+# API-Konfiguration
 API_KEY = "53E1B734-BE78-6D4B-BFC4-AB5A7BD0CE8E8CE228E8-69FC-4E92-9CAE-AD4C68D3AB44"
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -29,35 +39,38 @@ TRACKED_ITEMS = {
     19920: "Berserker's Orichalcum Imbued Inscription"
 }
 
-def setup_database():
-    db_path = Path("market_data.db")
-    conn = sqlite3.connect(db_path)
+def init_db():
+    """Initialisiert die Datenbank mit den notwendigen Tabellen."""
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
-    # Tabelle für Marktdaten
+    # Tabelle für Markt-Snapshots
     c.execute('''CREATE TABLE IF NOT EXISTS market_snapshots (
-        timestamp DATETIME,
         item_id INTEGER,
+        timestamp DATETIME,
         lowest_sell INTEGER,
+        highest_sell INTEGER,
         total_sell_listings INTEGER,
         sell_listing_positions TEXT,
-        PRIMARY KEY (timestamp, item_id)
+        PRIMARY KEY (item_id, timestamp)
     )''')
     
-    # Tabelle für tägliche Zusammenfassungen
+    # Tabelle für tägliche Statistiken
     c.execute('''CREATE TABLE IF NOT EXISTS daily_stats (
-        date DATE,
         item_id INTEGER,
+        date DATE,
         avg_price INTEGER,
         min_price INTEGER,
         max_price INTEGER,
         avg_listings INTEGER,
         sales_estimate INTEGER,
-        PRIMARY KEY (date, item_id)
+        snapshot_count INTEGER,
+        PRIMARY KEY (item_id, date)
     )''')
     
     conn.commit()
-    return conn
+    conn.close()
+    logger.info("Datenbank initialisiert")
 
 def format_price(price):
     gold = price // 10000
@@ -65,110 +78,167 @@ def format_price(price):
     copper = price % 100
     return f"{gold}G {silver}S {copper}C"
 
-def collect_market_data(conn):
-    c = conn.cursor()
-    timestamp = datetime.now()
-    
-    print(f"\nMarktdaten-Sammlung ({timestamp.strftime('%Y-%m-%d %H:%M:%S')}):")
-    print("-" * 70)
-    
-    for item_id, name in TRACKED_ITEMS.items():
-        try:
-            response = requests.get(f"https://api.guildwars2.com/v2/commerce/listings/{item_id}")
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Verkaufsangebote analysieren
-                sells = data.get('sells', [])
-                if sells:
-                    lowest_sell = sells[0]['unit_price']
-                    total_listings = sum(listing['quantity'] for listing in sells)
-                    
-                    # Speichere die ersten 50 Verkaufspreise mit Mengen
-                    listing_positions = json.dumps([
-                        {'price': s['unit_price'], 'quantity': s['quantity']}
-                        for s in sells[:50]
-                    ])
-                    
-                    # Speichere Snapshot
-                    c.execute('''INSERT INTO market_snapshots 
-                        (timestamp, item_id, lowest_sell, total_sell_listings, sell_listing_positions)
-                        VALUES (?, ?, ?, ?, ?)''',
-                        (timestamp, item_id, lowest_sell, total_listings, listing_positions))
-                    
-                    print(f"Waffe: {name}")
-                    print(f"Niedrigster Verkaufspreis: {format_price(lowest_sell)}")
-                    print(f"Aktive Verkaufsangebote: {total_listings} Stück")
-                    
-                    # Analysiere Verkaufspositionen
-                    total_before = 0
-                    for i, listing in enumerate(sells[:5], 1):
-                        print(f"Position {i}: {format_price(listing['unit_price'])} ({listing['quantity']} Stück)")
-                        total_before += listing['quantity']
-                    
-                    print(f"Angebote vor Position 5: {total_before} Stück")
-                    print("-" * 70)
-            
-            time.sleep(1)  # API-Rate-Limit beachten
-            
-        except Exception as e:
-            print(f"Fehler bei {name}: {str(e)}")
-            continue
-    
-    conn.commit()
-
-def analyze_daily_stats(conn):
-    c = conn.cursor()
-    yesterday = (datetime.now() - timedelta(days=1)).date()
-    
-    print(f"\nTagesanalyse für {yesterday}:")
-    print("-" * 70)
-    
-    for item_id, name in TRACKED_ITEMS.items():
-        # Hole Daten des Vortags
-        c.execute('''SELECT 
-            MIN(lowest_sell) as min_price,
-            MAX(lowest_sell) as max_price,
-            AVG(lowest_sell) as avg_price,
-            AVG(total_sell_listings) as avg_listings,
-            COUNT(*) as snapshots
-            FROM market_snapshots 
-            WHERE date(timestamp) = ? AND item_id = ?''',
-            (yesterday, item_id))
+def collect_market_data():
+    """Sammelt aktuelle Marktdaten für alle überwachten Items."""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        logger.info("Starte Datensammlung...")
+        current_time = datetime.now().replace(microsecond=0)
         
-        stats = c.fetchone()
-        if stats and stats[0]:
-            min_price, max_price, avg_price, avg_listings, snapshots = stats
-            
-            # Schätze Verkäufe durch Änderungen in den Listings
-            c.execute('''SELECT total_sell_listings 
+        for item_id in TRACKED_ITEMS.keys():
+            try:
+                # API-Anfrage für Handelspostergebnisse
+                response = requests.get(f'https://api.guildwars2.com/v2/commerce/listings/{item_id}')
+                if response.status_code != 200:
+                    logger.warning(f"Fehler beim Abrufen der Daten für Item {item_id}: {response.status_code}")
+                    continue
+                
+                data = response.json()
+                if not data.get('sells'):
+                    logger.warning(f"Keine Verkaufsdaten für Item {item_id}")
+                    continue
+                
+                # Extrahiere relevante Daten
+                sells = data['sells']
+                if not sells:
+                    continue
+                
+                lowest_sell = sells[0]['unit_price']
+                highest_sell = sells[-1]['unit_price']
+                total_listings = sum(offer['quantity'] for offer in sells)
+                
+                # Speichere die ersten 5 Preispunkte mit Mengen
+                price_points = []
+                quantity_before = 0
+                for i, offer in enumerate(sells[:5]):
+                    price_points.append({
+                        'position': i + 1,
+                        'price': offer['unit_price'],
+                        'quantity': offer['quantity']
+                    })
+                    if i < 5:  # Zähle Angebote vor Position 5
+                        quantity_before += offer['quantity']
+                
+                # Speichere Snapshot in der Datenbank
+                c = conn.cursor()
+                c.execute('''
+                    INSERT INTO market_snapshots 
+                    (item_id, timestamp, lowest_sell, highest_sell, total_sell_listings, sell_listing_positions)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    item_id,
+                    current_time,
+                    lowest_sell,
+                    highest_sell,
+                    total_listings,
+                    json.dumps({
+                        'price_points': price_points,
+                        'quantity_before_5': quantity_before
+                    })
+                ))
+                
+                # Logge Informationen
+                logger.info(f"Waffe: {TRACKED_ITEMS[item_id]}")
+                logger.info(f"Niedrigster Verkaufspreis: {format_price(lowest_sell)}")
+                logger.info(f"Aktive Verkaufsangebote: {total_listings} Stück")
+                
+                for point in price_points:
+                    logger.info(f"Position {point['position']}: {format_price(point['price'])} ({point['quantity']} Stück)")
+                logger.info(f"Angebote vor Position 5: {quantity_before} Stück")
+                logger.info("-" * 70)
+                
+            except Exception as e:
+                logger.error(f"Fehler bei der Verarbeitung von Item {item_id}: {str(e)}")
+                continue
+        
+        conn.commit()
+        logger.info("Datensammlung abgeschlossen")
+        
+    except Exception as e:
+        logger.error(f"Allgemeiner Fehler bei der Datensammlung: {str(e)}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+def analyze_daily_data():
+    """Analysiert die gesammelten Daten des Tages."""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        logger.info(f"Tagesanalyse für {datetime.now().date()}:")
+        logger.info("-" * 70)
+        
+        c = conn.cursor()
+        current_date = datetime.now().date()
+        
+        for item_id in TRACKED_ITEMS.keys():
+            try:
+                # Hole Snapshots für heute
+                c.execute('''SELECT 
+                    AVG(lowest_sell) as avg_price,
+                    MIN(lowest_sell) as min_price,
+                    MAX(lowest_sell) as max_price,
+                    AVG(total_sell_listings) as avg_listings,
+                    COUNT(*) as snapshot_count
                 FROM market_snapshots 
-                WHERE date(timestamp) = ? AND item_id = ?
-                ORDER BY timestamp''',
-                (yesterday, item_id))
-            
-            listings = [r[0] for r in c.fetchall()]
-            sales_estimate = 0
-            for i in range(1, len(listings)):
-                if listings[i] < listings[i-1]:
-                    sales_estimate += listings[i-1] - listings[i]
-            
-            # Speichere Tagesstatistik
-            c.execute('''INSERT OR REPLACE INTO daily_stats 
-                (date, item_id, avg_price, min_price, max_price, avg_listings, sales_estimate)
-                VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                (yesterday, item_id, int(avg_price), min_price, max_price, 
-                 int(avg_listings), sales_estimate))
-            
-            print(f"Item: {name}")
-            print(f"Durchschnittspreis: {format_price(int(avg_price))}")
-            print(f"Preisbereich: {format_price(min_price)} - {format_price(max_price)}")
-            print(f"Durchschnittliche Angebote: {int(avg_listings)}")
-            print(f"Geschätzte Verkäufe: {sales_estimate}")
-            print(f"Anzahl Snapshots: {snapshots}")
-            print("-" * 70)
-    
-    conn.commit()
+                WHERE item_id = ? 
+                AND date(timestamp) = date('now')
+                ''', (item_id,))
+                
+                daily_stats = c.fetchone()
+                
+                if not daily_stats or not daily_stats[0]:
+                    continue
+                
+                # Schätze Verkäufe basierend auf Änderungen in den Angeboten
+                c.execute('''SELECT total_sell_listings
+                    FROM market_snapshots
+                    WHERE item_id = ?
+                    AND date(timestamp) = date('now')
+                    ORDER BY timestamp''', (item_id,))
+                
+                listings = [row[0] for row in c.fetchall()]
+                sales_estimate = 0
+                if len(listings) > 1:
+                    for i in range(1, len(listings)):
+                        if listings[i] < listings[i-1]:
+                            sales_estimate += listings[i-1] - listings[i]
+                
+                # Speichere Tagesstatistik
+                c.execute('''INSERT OR REPLACE INTO daily_stats
+                    (item_id, date, avg_price, min_price, max_price, avg_listings, sales_estimate, snapshot_count)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    item_id,
+                    current_date,
+                    round(daily_stats[0]),
+                    daily_stats[1],
+                    daily_stats[2],
+                    round(daily_stats[3]),
+                    sales_estimate,
+                    daily_stats[4]
+                ))
+                
+                # Logge Statistiken
+                logger.info(f"Item: {TRACKED_ITEMS[item_id]}")
+                logger.info(f"Durchschnittspreis: {format_price(round(daily_stats[0]))}")
+                logger.info(f"Preisbereich: {format_price(daily_stats[1])} - {format_price(daily_stats[2])}")
+                logger.info(f"Durchschnittliche Angebote: {round(daily_stats[3])}")
+                logger.info(f"Geschätzte Verkäufe: {sales_estimate}")
+                logger.info(f"Anzahl Snapshots: {daily_stats[4]}")
+                logger.info("-" * 70)
+                
+            except Exception as e:
+                logger.error(f"Fehler bei der Analyse von Item {item_id}: {str(e)}")
+                continue
+        
+        conn.commit()
+        logger.info("Tagesanalyse abgeschlossen")
+        
+    except Exception as e:
+        logger.error(f"Allgemeiner Fehler bei der Tagesanalyse: {str(e)}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 def main():
     conn = setup_database()
@@ -183,4 +253,14 @@ def main():
         conn.close()
 
 if __name__ == "__main__":
-    main() 
+    # Initialisiere die Datenbank beim Start
+    init_db()
+    
+    while True:
+        try:
+            collect_market_data()
+            analyze_daily_data()
+            time.sleep(300)  # 5 Minuten warten
+        except Exception as e:
+            logger.error(f"Fehler im Market Research Service: {str(e)}")
+            time.sleep(60)  # Bei Fehler 1 Minute warten 

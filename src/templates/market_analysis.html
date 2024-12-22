@@ -37,6 +37,29 @@
         .card {
             margin-bottom: 1rem;
         }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active .status-dot {
+            background-color: #28a745;
+            box-shadow: 0 0 8px #28a745;
+        }
+        .status-inactive .status-dot {
+            background-color: #dc3545;
+            box-shadow: 0 0 8px #dc3545;
+        }
+        .status-error .status-dot {
+            background-color: #ffc107;
+            box-shadow: 0 0 8px #ffc107;
+        }
+        .status-time {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -57,6 +80,14 @@
                             <a class="nav-link active" href="/market">Marktanalyse</a>
                         </li>
                     </ul>
+                    <!-- Service Status -->
+                    <div class="ms-auto d-flex align-items-center">
+                        <div id="serviceStatus" class="text-white">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Prüfe Service-Status...</span>
+                            <small class="status-time d-block text-end"></small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -521,10 +552,129 @@
         });
 
         // Funktion zum Aktualisieren der Detailansicht
-        function updateItemDetails(itemId) {
-            // API-Aufruf und Aktualisierung der UI
-            // Wird später implementiert
+        async function updateItemDetails(itemId) {
+            try {
+                const response = await fetch(`/api/market/details/${itemId}`);
+                if (!response.ok) throw new Error('Netzwerk-Antwort war nicht ok');
+                const data = await response.json();
+                
+                // Aktualisiere Statistiken
+                const avgPrice = data.hourly_data.length > 0 ? data.hourly_data[data.hourly_data.length - 1].avg_price : 0;
+                const avgListings = data.hourly_data.length > 0 ? data.hourly_data[data.hourly_data.length - 1].avg_listings : 0;
+                const salesEstimate = data.daily_stats.length > 0 ? data.daily_stats[data.daily_stats.length - 1].sales_estimate : 0;
+                
+                document.getElementById('avgPrice').innerHTML = formatGoldPrice(avgPrice);
+                document.getElementById('activeListings').textContent = Math.round(avgListings);
+                document.getElementById('salesEstimate').textContent = `~${salesEstimate} pro Tag`;
+                
+                // Position im Handelsposten
+                if (data.current_position) {
+                    const positionText = data.current_position.price_points.map((p, i) => 
+                        `${i+1}. ${formatGoldPrice(p.price)} (${p.quantity}x)`
+                    ).join('\n');
+                    document.getElementById('listingPosition').textContent = positionText;
+                } else {
+                    document.getElementById('listingPosition').textContent = 'Keine Daten';
+                }
+                
+                // Aktualisiere Preisverlauf-Chart
+                if (window.priceHistoryChart) {
+                    window.priceHistoryChart.destroy();
+                }
+                
+                const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+                window.priceHistoryChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.hourly_data.map(d => {
+                            const date = new Date(d.timestamp);
+                            return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                        }),
+                        datasets: [{
+                            label: 'Durchschnittspreis',
+                            data: data.hourly_data.map(d => d.avg_price / 10000),
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }, {
+                            label: 'Min-Max Bereich',
+                            data: data.hourly_data.map(d => ({
+                                x: d.timestamp,
+                                y: d.avg_price / 10000,
+                                yMin: d.min_price / 10000,
+                                yMax: d.max_price / 10000
+                            })),
+                            type: 'line',
+                            fill: true,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const copper = Math.round(context.parsed.y * 10000);
+                                        return formatGoldPrice(copper);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Preis in Gold'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Item-Details:', error);
+                // Zeige Fehlermeldung in der UI
+                document.getElementById('avgPrice').textContent = 'Fehler';
+                document.getElementById('activeListings').textContent = 'Fehler';
+                document.getElementById('listingPosition').textContent = 'Fehler';
+                document.getElementById('salesEstimate').textContent = 'Fehler';
+            }
         }
+
+        // Funktion zum Prüfen des Service-Status
+        async function checkServiceStatus() {
+            try {
+                const response = await fetch('/api/market/service-status');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('serviceStatus');
+                statusDiv.className = `status-${data.status}`;
+                
+                const statusText = statusDiv.querySelector('.status-text');
+                statusText.textContent = data.message;
+                
+                if (data.last_update) {
+                    const lastUpdate = new Date(data.last_update);
+                    const statusTime = statusDiv.querySelector('.status-time');
+                    statusTime.textContent = `Letzte Aktualisierung: ${lastUpdate.toLocaleTimeString('de-DE')}`;
+                }
+                
+            } catch (error) {
+                console.error('Fehler beim Prüfen des Service-Status:', error);
+                const statusDiv = document.getElementById('serviceStatus');
+                statusDiv.className = 'status-error';
+                statusDiv.querySelector('.status-text').textContent = 'Fehler beim Prüfen des Status';
+            }
+        }
+
+        // Prüfe Status alle 30 Sekunden
+        setInterval(checkServiceStatus, 30000);
+        // Initiale Prüfung
+        checkServiceStatus();
     </script>
 </body>
 </html> 
