@@ -204,12 +204,26 @@
             const silver = Math.floor((copper % 10000) / 100);
             const copperRest = copper % 100;
             
-            return `
-                <span class="price">
-                    ${gold}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
-                    ${silver}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
-                    ${copperRest}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
-                </span>`;
+            let result = '<span class="price">';
+            
+            // Wenn Gold vorhanden ist, zeige es und alle nachfolgenden Währungen
+            if (gold > 0) {
+                result += `${gold}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">`;
+                result += `${silver}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">`;
+                result += `${copperRest}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">`;
+            }
+            // Wenn kein Gold aber Silber vorhanden ist
+            else if (silver > 0) {
+                result += `${silver}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">`;
+                result += `${copperRest}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">`;
+            }
+            // Wenn weder Gold noch Silber
+            else {
+                result += `${copperRest}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">`;
+            }
+            
+            result += '</span>';
+            return result;
         }
 
         // Funktion zum Laden der Item-Details
