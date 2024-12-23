@@ -304,110 +304,101 @@ function displayResults(results) {
     updateActiveListings();
 }
 
-// Event Handler für Calculate Profit Buttons
-document.addEventListener('click', async function(e) {
-    // Copy Button Handler
-    if (e.target.closest('.copy-btn')) {
-        const button = e.target.closest('.copy-btn');
-        const itemName = button.getAttribute('data-name');
-        try {
-            await navigator.clipboard.writeText(itemName);
-            
-            // Visuelles Feedback
-            const originalIcon = button.innerHTML;
-            button.innerHTML = '<i class="bi bi-check"></i>';
-            button.classList.add('text-success');
-            
-            setTimeout(() => {
-                button.innerHTML = originalIcon;
-                button.classList.remove('text-success');
-            }, 1000);
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
+// Event-Handler für Profit-Buttons
+document.addEventListener('click', async function(event) {
+    if (!event.target.matches('.calculate-profit')) return;
+    
+    const button = event.target;
+    const weaponName = button.dataset.weapon;
+    const netProfitSpan = button.closest('.card-body').querySelector('.net-profit');
+    
+    // Wenn der Profit bereits angezeigt wird, entferne ihn
+    if (button.classList.contains('btn-outline-success')) {
+        button.classList.remove('btn-outline-success');
+        button.classList.add('btn-outline-primary');
+        netProfitSpan.textContent = '';
+        if (currentResults[weaponName]) {
+            delete currentResults[weaponName].profit;
         }
         return;
     }
-
-    // Calculate Profit Button Handler
-    if (e.target.classList.contains('calculate-profit')) {
-        const weaponName = e.target.dataset.weapon;
-        const weaponCard = e.target.closest('.card');
-        const netProfitSpan = weaponCard.querySelector('.net-profit');
-        const profitsList = document.getElementById('profitsList');
-
-        // Wenn der Profit bereits berechnet wurde, entferne ihn
-        if (netProfitSpan.textContent) {
-            netProfitSpan.textContent = '';
-            // Ändere Button zurück zu blau
-            e.target.classList.remove('btn-outline-success');
-            e.target.classList.add('btn-outline-primary');
-            // Entferne den Eintrag aus der Profitliste
-            const existingItem = Array.from(profitsList.children).find(item => 
-                item.querySelector('strong').textContent === `${weaponName.replace(/_/g, ' ')}:`
-            );
-            if (existingItem) {
-                profitsList.removeChild(existingItem);
-                updateTotalProfit();
-            }
-            return;
-        }
-
-        if (!weaponName) {
-            console.error('Missing weapon data');
-            return;
+    
+    try {
+        // Hole die Craft-Kosten aus den aktuellen Ergebnissen
+        const craftCost = currentResults[weaponName].total;
+        if (!craftCost) {
+            throw new Error('Could not find craft cost for ' + weaponName);
         }
         
-        try {
-            // Lade den aktuellen Verkaufspreis vom Trading Post
-            const response = await fetch(`/fetch-weapon-price/${encodeURIComponent(weaponName)}`);
-            if (!response.ok) throw new Error('Failed to fetch weapon price');
-            const sellPrice = await response.json();
-            
-            // Finde die Herstellungskosten für die Waffe
-            const costText = weaponCard.querySelector('.small.mb-2').textContent;
-            const costMatches = costText.match(/Cost:\s+(\d+)G\s+(\d+)S\s+(\d+)C/);
-            if (!costMatches) {
-                console.error('Could not parse craft cost');
-                return;
-            }
-            
-            const craftCost = {
-                gold: parseInt(costMatches[1]) || 0,
-                silver: parseInt(costMatches[2]) || 0,
-                copper: parseInt(costMatches[3]) || 0
-            };
-
-            // Berechne den Profit
-            const profitData = calculateProfit(sellPrice, craftCost);
-
-            // Ändere Button zu grün
-            e.target.classList.remove('btn-outline-primary');
-            e.target.classList.add('btn-outline-success');
-
-            // Aktualisiere den Profit in der Ergebniskarte
-            netProfitSpan.className = `net-profit text-end ${profitData.gold < 0 ? 'text-danger' : 'text-success'} small`;
-            netProfitSpan.innerHTML = `${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)}`;
-
-            // Aktualisiere die Profit-Anzeige
-            const listItem = document.createElement('li');
-            listItem.className = 'd-flex justify-content-between align-items-center mb-2';
-            listItem.innerHTML = `
-                <strong>${weaponName.replace(/_/g, ' ')}:</strong>
-                <span class="${profitData.gold < 0 ? 'text-danger' : 'text-success'}">
-                    ${formatCurrency(Math.abs(profitData.gold), profitData.silver, profitData.copper)}
-                </span>
-            `;
-
-            // Füge neuen Eintrag hinzu
-            profitsList.appendChild(listItem);
-
-            // Aktualisiere Gesamtgewinn
-            updateTotalProfit();
-            
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to calculate profit. Please try again.');
+        // Konvertiere Craft-Kosten in Kupfer
+        const craftCostCopper = (craftCost.gold * 10000) + (craftCost.silver * 100) + craftCost.copper;
+        
+        // Hole den aktuellen Verkaufspreis
+        const response = await fetch(`/fetch-weapon-price/${encodeURIComponent(weaponName)}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch weapon price');
         }
+        
+        const sellPrice = await response.json();
+        if (!sellPrice || typeof sellPrice.gold === 'undefined') {
+            throw new Error('Invalid price data received');
+        }
+        
+        // Konvertiere Verkaufspreis in Kupfer
+        const sellPriceCopper = (sellPrice.gold * 10000) + (sellPrice.silver * 100) + sellPrice.copper;
+        
+        // Berechne Trading Post Gebühren (15%)
+        const tpFeeCopper = Math.ceil(sellPriceCopper * 0.15);
+        
+        // Berechne Nettogewinn in Kupfer
+        const netProfitInCopper = sellPriceCopper - tpFeeCopper - craftCostCopper;
+        
+        // Konvertiere Nettogewinn zurück in Gold/Silber/Kupfer
+        const profitGold = Math.floor(Math.abs(netProfitInCopper) / 10000);
+        const profitSilver = Math.floor((Math.abs(netProfitInCopper) % 10000) / 100);
+        const profitCopper = Math.abs(netProfitInCopper) % 100;
+        
+        // Speichere die Profitdaten
+        currentResults[weaponName].profit = {
+            sellPrice: sellPrice,
+            tpFee: {
+                gold: Math.floor(tpFeeCopper / 10000),
+                silver: Math.floor((tpFeeCopper % 10000) / 100),
+                copper: tpFeeCopper % 100
+            },
+            netProfit: {
+                gold: netProfitInCopper < 0 ? -profitGold : profitGold,
+                silver: profitSilver,
+                copper: profitCopper
+            }
+        };
+        
+        // Aktualisiere die Anzeige
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-outline-success');
+        netProfitSpan.className = `net-profit text-end ${netProfitInCopper < 0 ? 'text-danger' : 'text-success'} small`;
+        netProfitSpan.innerHTML = formatCurrency(
+            Math.abs(currentResults[weaponName].profit.netProfit.gold),
+            currentResults[weaponName].profit.netProfit.silver,
+            currentResults[weaponName].profit.netProfit.copper
+        );
+        
+    } catch (error) {
+        console.error('Error calculating profit:', error);
+        button.classList.remove('btn-outline-primary', 'btn-outline-success');
+        button.classList.add('btn-outline-danger');
+        netProfitSpan.className = 'net-profit text-end text-danger small';
+        netProfitSpan.textContent = 'Error: ' + error.message;
+        
+        // Setze den Button nach 3 Sekunden zurück
+        setTimeout(() => {
+            button.classList.remove('btn-outline-danger');
+            button.classList.add('btn-outline-primary');
+            netProfitSpan.textContent = '';
+            if (currentResults[weaponName]) {
+                delete currentResults[weaponName].profit;
+            }
+        }, 3000);
     }
 });
 
