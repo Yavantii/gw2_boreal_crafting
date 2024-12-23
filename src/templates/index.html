@@ -167,9 +167,15 @@
                                 </div>
                                 {% if prices and prices.inscription %}
                                     <div class="price-value">
-                                        <span class="gold">{{ prices.inscription.gold }}G</span>
-                                        <span class="silver">{{ prices.inscription.silver }}S</span>
-                                        <span class="copper">{{ prices.inscription.copper }}C</span>
+                                        <span class="price">
+                                            {% if prices.inscription.gold > 0 %}
+                                                {{ prices.inscription.gold }}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
+                                            {% endif %}
+                                            {% if prices.inscription.gold > 0 or prices.inscription.silver > 0 %}
+                                                {{ prices.inscription.silver }}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
+                                            {% endif %}
+                                            {{ prices.inscription.copper }}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
+                                        </span>
                                     </div>
                                 {% else %}
                                     <span class="text-muted">Loading...</span>
@@ -189,9 +195,15 @@
                                 </div>
                                 {% if prices and prices.ori_ore %}
                                     <div class="price-value">
-                                        <span class="gold">{{ prices.ori_ore.gold }}G</span>
-                                        <span class="silver">{{ prices.ori_ore.silver }}S</span>
-                                        <span class="copper">{{ prices.ori_ore.copper }}C</span>
+                                        <span class="price">
+                                            {% if prices.ori_ore.gold > 0 %}
+                                                {{ prices.ori_ore.gold }}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
+                                            {% endif %}
+                                            {% if prices.ori_ore.gold > 0 or prices.ori_ore.silver > 0 %}
+                                                {{ prices.ori_ore.silver }}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
+                                            {% endif %}
+                                            {{ prices.ori_ore.copper }}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
+                                        </span>
                                     </div>
                                 {% else %}
                                     <span class="text-muted">Loading...</span>
@@ -211,9 +223,15 @@
                                 </div>
                                 {% if prices and prices.ancient_wood %}
                                     <div class="price-value">
-                                        <span class="gold">{{ prices.ancient_wood.gold }}G</span>
-                                        <span class="silver">{{ prices.ancient_wood.silver }}S</span>
-                                        <span class="copper">{{ prices.ancient_wood.copper }}C</span>
+                                        <span class="price">
+                                            {% if prices.ancient_wood.gold > 0 %}
+                                                {{ prices.ancient_wood.gold }}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
+                                            {% endif %}
+                                            {% if prices.ancient_wood.gold > 0 or prices.ancient_wood.silver > 0 %}
+                                                {{ prices.ancient_wood.silver }}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
+                                            {% endif %}
+                                            {{ prices.ancient_wood.copper }}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
+                                        </span>
                                     </div>
                                 {% else %}
                                     <span class="text-muted">Loading...</span>
@@ -233,9 +251,15 @@
                                 </div>
                                 {% if prices and prices.leather %}
                                     <div class="price-value">
-                                        <span class="gold">{{ prices.leather.gold }}G</span>
-                                        <span class="silver">{{ prices.leather.silver }}S</span>
-                                        <span class="copper">{{ prices.leather.copper }}C</span>
+                                        <span class="price">
+                                            {% if prices.leather.gold > 0 %}
+                                                {{ prices.leather.gold }}<img src="https://render.guildwars2.com/file/090A980A96D39FD36FBB004903644C6DBEFB1FFB/156904.png" alt="Gold" class="currency-icon">
+                                            {% endif %}
+                                            {% if prices.leather.gold > 0 or prices.leather.silver > 0 %}
+                                                {{ prices.leather.silver }}<img src="https://render.guildwars2.com/file/E5A2197D78ECE4AE0349C8B3710D033D22DB0DA6/156907.png" alt="Silver" class="currency-icon">
+                                            {% endif %}
+                                            {{ prices.leather.copper }}<img src="https://render.guildwars2.com/file/6CF8F96A3299CFC75D5CC90617C3C70331A1EF0E/156902.png" alt="Copper" class="currency-icon">
+                                        </span>
                                     </div>
                                 {% else %}
                                     <span class="text-muted">Loading...</span>
