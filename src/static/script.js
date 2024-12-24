@@ -624,3 +624,51 @@ function updateShoppingList(materials) {
         });
     });
 }
+
+// Funktion zum Kopieren der Shopping-Liste
+async function copyShoppingList() {
+    const shoppingList = document.getElementById('shoppingList');
+    if (!shoppingList) {
+        console.error('Shopping list element not found');
+        return;
+    }
+
+    // Formatiere die Shopping-Liste für das Kopieren
+    const rawMaterials = Array.from(document.querySelectorAll('#rawMaterialsList li')).map(li => li.textContent.trim());
+    const inscriptions = Array.from(document.querySelectorAll('#inscriptionsList li')).map(li => li.textContent.trim());
+    const components = Array.from(document.querySelectorAll('#componentsList li')).map(li => li.textContent.trim());
+
+    const formattedList = [
+        'Rohmaterialien:',
+        ...rawMaterials,
+        '',
+        'Inschriften:',
+        ...inscriptions,
+        '',
+        'Komponenten:',
+        ...components
+    ].join('\n');
+
+    try {
+        await navigator.clipboard.writeText(formattedList);
+        // Zeige Feedback an
+        const copyButton = document.querySelector('.copy-shopping-list');
+        if (copyButton) {
+            const originalText = copyButton.innerHTML;
+            copyButton.innerHTML = '<i class="bi bi-check"></i> Kopiert!';
+            setTimeout(() => {
+                copyButton.innerHTML = originalText;
+            }, 2000);
+        }
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+    }
+}
+
+// Event-Listener für den Copy-Button
+document.addEventListener('DOMContentLoaded', () => {
+    const copyButton = document.querySelector('.copy-shopping-list');
+    if (copyButton) {
+        copyButton.addEventListener('click', copyShoppingList);
+    }
+});

@@ -314,6 +314,26 @@
                         </div>
                     </div>
                 </div>
+                <div class="card mt-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Shopping Liste</h5>
+                        <button class="btn btn-sm btn-outline-light copy-shopping-list">
+                            <i class="bi bi-clipboard"></i> Kopieren
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="shoppingList">
+                            <h6 class="text-primary">Rohmaterialien</h6>
+                            <ul id="rawMaterialsList" class="list-unstyled mb-3"></ul>
+                            
+                            <h6 class="text-primary">Inschriften</h6>
+                            <ul id="inscriptionsList" class="list-unstyled mb-3"></ul>
+                            
+                            <h6 class="text-primary">Komponenten</h6>
+                            <ul id="componentsList" class="list-unstyled mb-3"></ul>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Hauptinhalt -->
@@ -326,6 +346,7 @@
 
     <!-- Bootstrap und andere Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
     function calculateResults() {
         const amount = document.getElementById('amount').value;
@@ -507,6 +528,5 @@
         }, 100);
     });
     </script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
